@@ -1,4 +1,4 @@
-### Filecoin ###
+# Filecoin #
 
 Transactions on the nimbus network have a few requirements that are not met by the bitcoin currency. One key concept is 'conditional spending,' or the ability to incorporate clauses into transactions you submit to the network. An example is "I will give Bob $10,000 if gives at least $25,000 to Alice."
 
