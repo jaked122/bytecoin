@@ -20,7 +20,8 @@ the same host. The database is saved to a file for persistence. Currently hosts
 and files are always stored with the same key.
 
 
-== TL;DR ==
+TL;DR
+==
 
 A cryptocurrency that is backed by a commodity that has real market value; disk
 storage on the cloud. The value of the cryptocurrency should be more or less
@@ -46,7 +47,8 @@ Though I have not mentioned them yet, there will also be considerations for
 adding tools to bytecoin such as Zerocoin, distributed exchanges, and
 potentially anonymous file storage and retrieval.
 
-=== The Concept ===
+The Concept
+===
 
 Note: I have spent multiple months thinking this through, and that makes it
 difficult to explain clearly. If someone else figures out how everything
