@@ -21,7 +21,7 @@ and files are always stored with the same key.
 
 
 TL;DR
-==
+====
 
 A cryptocurrency that is backed by a commodity that has real market value; disk
 storage on the cloud. The value of the cryptocurrency should be more or less
@@ -48,7 +48,7 @@ adding tools to bytecoin such as Zerocoin, distributed exchanges, and
 potentially anonymous file storage and retrieval.
 
 The Concept
-===
+=
 
 Note: I have spent multiple months thinking this through, and that makes it
 difficult to explain clearly. If someone else figures out how everything
