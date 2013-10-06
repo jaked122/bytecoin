@@ -9,6 +9,13 @@ import (
 func handleConnection(conn net.Conn) {
 	fmt.Printf("Incoming Connection!\n")
 
+	outputFile, err := os.Create("storage.ytc")
+	if err != nil {
+		fmt.Printf("Error creating storage.ytc")
+		return
+	}
+	defer outputFile.Close()
+
 	// For now, assume a file transaction
 	for {
 		buf := make([]byte, 4096)
@@ -17,21 +24,11 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		fileData := buf[0:bytesRead]
-		outputFile, err := os.Create("storage.ytc")
-		if err != nil {
-			fmt.Printf("Error creating storage.ytc")
-			return
-		}
-		defer outputFile.Close()
-
-		_, err = outputFile.Write(buf[0:bytesRead])
+		n, err := outputFile.Write(buf[:bytesRead])
+		fmt.Printf("Bytes Written: %u\n", n);
 		if err != nil {
 			fmt.Printf("Had problems writing the file!\n")
 		}
-				
-		fmt.Printf("%s\n", string(fileData))
-		fmt.Printf("File command recognized\n")
 	}
 }
 

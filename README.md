@@ -3,10 +3,9 @@ features and change things the documentation will keep up. For bytecoin I feel
 that this is particularly necessary because there is a massive volume of new
 cryptocurrency concepts.
 
-Right now there is a simple client and server. The client connects to the
-localhost server (or any server - it's a socket!) on port 8080 and prints
-a basic statement.
+Right now there is a client and a server.
 
-The server takes whatever data the client sends and prints it to a file,
-storage.ytc - storage.ytc will be responsible for holding all of the files that
-back bytecoin. YTC is the ticker term for bytecoin.
+The client takes the argument 'store' followed by a filename, opens a
+connection to the server on port 8080 and sends the file to the server.
+
+The server takes the file and prints it to storage.ytc
