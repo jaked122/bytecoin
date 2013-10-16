@@ -3,14 +3,36 @@ Table of Contents
 
 1. Proof-of-Contribution
 	* how it is different from proof-of-work
+	* proof-of-contribution is effectively a reputation system
 
 2. Definitions
 
 3. Progression of the block chain
-	* what is a block chain
-	* what is stored in the bytecoin block chain
+	* what is a block chain and why one is needed
+	(!) * what is stored in the bytecoin block chain
 	* finding blocks
 	* handling failed blocks
+	* time alotted for mining
+	* which transactions should be included in the block
+
+4. Mining
+	* a constant mining rate
+	* timestamping
+	* distribution of mined coins
+
+5. Payment for Hosting
+	* selling the file storage commodity
+	* inherent value leads to stability
+
+6. Hosting Files
+	* cheating is possible
+	* contributions must be *new*
+	* contributions must be *available to everyone*
+
+7. Preserving Files
+	* erasure coding
+	* bytecoin reliability and file loss potential
+	* picking redundacny
 
 4. Network Panic
 	* determining that the network is in a panicked state
@@ -21,36 +43,19 @@ Table of Contents
 	* merging an unpanicked network with a panicked network
 	* merging two panicked networks
 
-6. Integrity of hosts
-	* proving that the file is there
-	* stopping conspriacy through random storing of files, bumping old files
-	* stopping conspiracy through constant rotation of files
-	* stopping conspiracy through using future blocks to determine placement
-	* stopping through conspiracy by keeping up a min flow (=/)
-
-4. Integrity of Files
-	* RAID
-
-4. Mining distribution
-	* small reward for finder of block --- small
-	* even distribution for hosts still having space
-	* fine incorporated into distributions for hosts that
-		fail tests (?)
-
 5. Pushing transactions to the network
 	* "early" confirms
 	* constant fee depending on which tier of the system you are in
 
-6. Purchasing filestorage
-	* entire network acts as a market maker, prices are adjusted each block (use linear regression?)
-
 7. Bandwidth Limits
-	* Ultimatum Game
+8. Ultimatum Game
 
 8. Conditional Spending
 
 9. Load Balancing and Management
 	* designed to fight situations like the reddit hug
+
+10. Wallets
 
 
 Proof-of-Contribution
@@ -58,25 +63,35 @@ Proof-of-Contribution
 
 Proof-of-contribution is like proof-of-work, except that instead of performing computations to achieve a hash, the computer in question provides resources ("contributions") to a network that can then be used by other participants in the network. The particular commodity of the bytecoin network is disk storage. Your contribution makes up a certain percent of the network, and that contribution directly relates to the amount of coins that you mine.
 
-(move to integrity of hosts section)
-!First, we must know that a contribution is _useful_. We will define useful as any resource that can be used by every person on the network. Bytecoin secures this by randomly associating the contributor to the user. As long as the contributor has no control over which user gets the contribution, and similarly the user has no control over which contributor they recieve from, then we can assume that all contributions are useful.
-
-!Second, we must know that a contribution is unique, meaning that it is not something that has been seen before or used before by the network. What this really means is that the contribution cannot already be on the network, because if the contribution is not already on the network, then it is clearly new to the network and thus a real contribution.
+If you abstract proof-of-contribution to a higher level view, you realize that it is effectively a reputation system. Initially, there are a set of nodes each with a volume of reputation (their confirmed contribution). When new nodes come and add contributions to the network, these nodes recieve reputation in accordance to their contribution. It is stronger than a typical reputation system because contribution is a difficult task requiring the deployment of real world resources (IE contributing file storage space to the network).
 
 
 Definitions
 ===========
 
+A 'network identifier' is the hash of the most recent nondeterministic block in the network. This is actually a linked list containing all of the nondeterministic blocks in the network back to the genesis block. Most networks will have a very short linked list of nondeterministic blocks.
+
 A 'host' is someone who is contributing file storage to the network and also mining coins.
+
 A 'consumer' is someone who is purchasing file storage from the network.
+
 An 'indictment' is a motion by the network to reject a particular block in the blockchain, thus rewiding the network and starting from the block before the indicted block.
+
+'Chain hosting' is buying stroage from the network, and then using the storage you purchased to host files on the network. This seemly pointless exercise allows you to host files for free (consumers cover all of your costs) while you get to claim mining rewards from the network. Chain hosting is an illegal activity, and must be prevented by the network.
+
+'Bytecoin reliability' is a measurement of how good the network is at keeping files online, and can be used to derive a reasonable amount of redundancy when storing files.
+
+'File loss potential' is bytecoin reliability, but includes variance.
+
+A 'subchain' is a block chain that comprises a different set of nodes than the global bytecoin network, (and therefore has a different blockchain) but can still perform transactions on the bytecoin network.
 
 
 The Block Chain
 ===============
 
-The block chain is a database of all the historical transactions of bytecoin. From the block chain, you can figure out which files are on the network, who has the files on the network, how much currency each wallet has, and each transaction that a wallet has ever made. 
+The block chain is a database of all the historical transactions of bytecoin. From the block chain, you can figure out which files are on the network, who has the files on the network, how much currency each wallet has, and each transaction that a wallet has ever made. A block chain is needed because you have a very large network trying to agree on a single database that can be updated from any part of the network. Blocks are discreet updates to the database so that the network can be in agreement of the current state.
 
+(!move this)
 Each time a new block is announced to the network, it contains a list of: 
 	* all the files that were removed from the network since the previous block
 	* all the files that were added to the network since the previous block
@@ -86,13 +101,92 @@ Each time a new block is announced to the network, it contains a list of:
 	* all unconditional transaction that have been announced
 	* all conditional transtactions that have been announced
 	* all conditional transactions that have been fulfilled
+	* any subchains that have been formed
+	* any subchains that have been removed
+	* all wallets associated to subchains
+	* all superblocks from subchains
 
 In bytecoin, the blockchain is managed by file hosts. Each block, a host is chosen to aggregate the next block in the blockchain. Hosts have a probability of being chosen equal to the percent of the network that their disk space contributions make up. A host contributing 15% of the total network has a 15% chance of being chosen as the aggregator each block. The way that a specific host is chosen is by using the hash of a previous block and mapping it to a particular host. This gives a deterministic model for picking hosts that can be verfied for past blocks as well as the current block.
 
-Because hosts are chosen ahead of time, there is a chance that the host will fail to produce a block. Because of this, a chosen host must produce a block for the block chain by a certain time. If the host does not, the network will vote to go to the next chosen host. The network votes by each host adding a signature to an indictment. When 51% of the network (as measured by disk space) has signed the indictment, the host and any potential blocks that it may produce are rejected, and the next host is chosen. The next host is chosen by taking the hash that chose the previous host and hashing it again. The next host now has a set amount of time to produce a block, or it will be indicted through the same process. When a host is indicted, the signed indictment is included into the block chain as proof that the network chose to move onto the next host.
+Because hosts are chosen ahead of time, there is a chance that the host will fail to produce a block. Because of this, a chosen host must produce a block for the block chain by a certain time. If the host does not, the network will vote to go to the next chosen host (a process called 'indictment'). The network votes by each host in the network adding a signature to an indictment. When 51% of the network (as measured by disk space) has signed an indictment, the host and any potential blocks that it may produce are rejected, and the next host is chosen. The next host is chosen by taking the hash that chose the previous host and hashing it again. The next host now has a set amount of time to produce a block, or it will be indicted through the same process. When a host is indicted, the signed indictment is included into the block chain as proof that the network chose to move onto the next host. The indictment is announced to the network, and the network continues with the new host. Hosts can be indicted both for either being too slow or for being offline.
 
-A host can also be indicted if the block that they release is dishonest. A dishonest block is one that includes transactions that were not signed by the sending wallet, includes transactions that put wallets at negative balances, or includes fulfilled conditional transactions when the condition has not actually been satisfied.
+The amount of time allotted to a host for finding a block is adjusted with the speed of the network. If a host gets indicted for being too slow, the network extends the amount of time that the next host has to find a block. If a host releases a block on time or early, the network decreases the amount of time allotted for finding blocks. On a network with sufficiently fast hosts, a new block could be theoretically released every few seconds. This will probably be the case during the early days of the network, however as the network grows to global scale the block speed will probably decrease dramatically.
 
+Because hosts are known ahead of time, all transactions can be forwarded to the host compiling a block, decreasing the amount of chatter on the network. To further clean up the network, the host that should recieve the current network transactions should be the host that is responsible for mining the *next* block, not the current block. By the time the previous block has been released, the next host should already have all the transactions for the next block, and can release the block faster. Any transactions sent to the host late (because of network lag and inconsistency) will be forwarded to the next host.
+
+Mining
+======
+
+Bytecoin has a static amount of coins that get mined each day, just like bitcoin. Blocks however are not mined at a specific rate. This means that the amount of coins released into the network per block varies based on the amount of time it takes to release each block. The time between blocks is the distance in time between the previous host seeing his previous block, and the current host seeing the previous hosts block. Illustrated:
+
+[Older Block] -> [Previous Host] -- [Previous Block] -> [Current Host]
+
+The time between blocks is the distance between the moment that [Previous Host] saw [Older Block] and the moment that [Current Host] saw [Previous Block]. That distance is how long it took to mine [Previous Block], and that time is used to determine the number of coins mined in the current block.
+
+Mined coins are distributed evenly among hosts each block according to contributions. The reward for the host that successfully mines a block comes from a different source, which will be discussed later in the writeup.
+
+Payment for Hosting
+===================
+
+Cloud file storage is a commodity with market value. The file storage provided by hosts on the bytecoin network is essentially a cloud storage service, and it is cloud storage that can be purchased. The bytecoin network will act as a market maker, using a combination of supply, demand, and variance to set the price of renting filestorage on the network. Filestorage is *rented* not purchased, which means recurring payments for file storage. The market maker on the network will try to set a price high enough such that there is a little bit of filestorage always available (to accomodate random spikes in demand - this is why variance is one of the variables in the equation) on the network, but low enough such that the vast majority of the network is always being rented out.
+
+This gives inherent value to the network. If there are thousands of hosts providing exabytes of data to the network, the price of bytecoin has a minimum - if the price falls greatly, the price of cloud storage will also fall greatly and people will take advantage of the extremely cheap prices. If the price of bytecoin spikes greatly, the value of mining will be great and this will encourage hosts to flock to the network. Hosts joining the network will increase the amount of data storage on the network and that will increase the inherent value of bytecoin. The simple act of bytecoin spiking in value will (over time) raise the actual value of bytecoin to match the inflation.
+
+This market mechanism is not perfect, and as the bytecoin network grows our perceived value of cloud storage may change dramatically. But at the very least bytecoin should be more stable than bitcoin, because the value is tethered to a real world commodity that people are willing to pay real money for (example: dropbox. But at a corporate scale, you may even find services like YouTube starting to lean on bytecoin to host large files).
+
+(filler) why there should be mining at all.
+
+Hosting Files
+=============
+
+Hosts contribute disk storage to the network and then mine coins proportional to the amount of disk space that they host. Bytecoin has a (needs auditing) comprehensive set of algorithms for detecting cheaters.
+
+	1. Contributions must be *new*. If a contribution is already on the network, it cannot be recontributed. I am specifically talking about an attack called 'chain hosting', where a node will pretend to host space on the network, and then when given a file to host will rent space off of the network to host the file. This allows a node to pretend that it is contributing to the network, when it is actually recursively hosting files on the network. While the host will not get any money for selling the disk storage, the host will recieve payment for mining, thus creating arbitrage for the host. I do not believe there is a way to make this inherently unprofitable for the hosts without removing the mining feature altogether. For this reason, chain hosting is something that needs to be detected. Chain hosting is detected using a mediator: when a client downloads a file, a small and randomly distributed portion of the file must be recieved through a mediator. An honest host will always use a mediator, and an honest client will always expect the file from a mediator. The mediator works by holding onto the mediated portion of the file for a set period of time, after which it will pass the data on. A chain hoster sandwhiched between two honest clients will have two use 2 mediators, thus doubling the amount of time that the held portion of the file is kept. When the client does not recieve the full mediated portion of the file after 1 wait cycle, the client can report the previous host for chain hosting.
+		
+		In all other cases, contributions are assumed to be new to the network.
+
+	2. Contributions must be *useful*. Bytecoin defines useful contributions as disk storage that can be provided to anybody. The worry is that because hosts are able to mine coins from nowhere in proportion to the amount of disk storage that they provide, some hosts will attempt to lie about the size of their contributions. I try to assert that if disk storage is distributed randomly throughout the network, hosts will not be able to pretend that they are contributing a great volume because they will need to prove that they actually have the files they are randomly hosting. They cannot host a computable file (such as a list of natural numbers) and then store it on one of their own nodes, because they have no control over which hosts recieve their file, and similarly they have no control over which files the end up hosting.
+
+		This randomness is achieved through hashing. When a file is announced to be hosted, the hash of the file is used to determine where on the network the file will land. Except then a file can be manipulated such that it hashes to a favorable place, therefore a file must be hashed again against information that is not available to the uploader of the file. The hash of the next block is not known to the uploader of the file, therefore the hash of the next block to be found will be used to determine the final destination of the file. It should be noted that this is a random place on the *entire network*, not just a random place amongst the free space of the network. There is a high probability that the new file will replace an existing file, but since the existing file has been randomly chosen, the existing file can be moved into a location with free space.
+
+		As long as this method ensures that a host cannot control which files they are hosting, and as long as point one holds, the network should be safe from dishonesty.
+
+Preserving Files
+================
+
+Hosts cannot be trusted to stay online, so data must be uploaded with redundancy. Some varient of erasure coding will be used to provide redundancy to the network. This gives the network the ability to replace hosts that go offline. The metric 'bytecoin reliability' is the percentage of hosts that are offline at any given moment without replacement. Bytecoin reliability can be used to determine optimal erasure coding settings such that a file has a near guarantee of remaining on the network without being overly redundant or expensive. I estimate that optimal settings on a floursing bytecoin network will typically result in less than 1.25 redunancy.
+
+Clients get to pick their own redundancy settings when uploading a file. In erasure coding, the two relevant numbers are the number of total hosts owning a file and the number of hosts that are required to be online in order for the file to be fully recoverable.
+
+Host Disappearance 
+==================
+
+Hosts must pay forward a deposit to the network before hosting files. This is their fee for going offline, and the fee is directly proportional to the cost of replacing the host (there is a bandwidth cost associated with replacing a host). This fee is never returned, because it is assumed that the host will eventually go offline. When a host does go offline, they will need to repay the fee in order to come back online.
+
+Hosts must prove they are online through some sort of ping magic every so often. In the event that a host stops pinging, the network will raise a flag on their files. If the host fails to come back online after a certain amount of time, the host is considered lost, and the deposit is taken and used to recover the lost files and give them to a different host.
+
+This allows malicious parties to DDOS major hosts and cost them large amounts of bytecoins, almost in a terrorist sort of way. Other than typical prevention measures such as Cloudflare, I do not know how to stop this. Ideally, the cost would be put on the person responsible for the loss of the host. This might actually be possible in a distributed network, but such a network does not yet exist.
+
+(filler) method for becoming a host with no initial bytecoins
+
+Dishonest Hosts
+===============
+
+There are two ways for a host to be dishonest. The first is for a host to release a dishonest block. The second is for a host to claim that they are hosting files when they have actually lost the files.
+
+Detecting the first type of dishonesty is easy; just check the block against the existing database. If the block allows a double spend or has any other inconsistency, an indictment of that host can be started, and the block can be rejected.
+
+The second type of dishonesty requires proof of hosting. The easiest way for a host to prove that they have a file is for someone to download the entire file and verify that the hashes match. There also may be a way to prove hosting because of the erasure coding; as long as the erasure coding remains consistent across the network I believe you can assume that the files are consistent. This may have bandwidth costs.
+
+The alternative way to verify files is for a client to create a cryptographic puzzle on the file. By hashing the file against a random string, the client can produce a seed that can then be used to deterministically create a public and private key pair. The client creates this pairing before uploading the file to the network. When the client wishes for the host to prove that it still has the file, the client will reveal the public key and random string, and the host must produce the private key. This can only be done once, so the client will need multiple random strings and public/private key pairs - one for each time the client wishes to challenge the host for the file.
+
+Hosts will be required to prove hosting every so often, and they will not be paid for the time period until they prove hosting. If the client is missing such that the client cannot challenge the host, then the host does not need to prove itself in order to get paid. Hopefully though the erasure coding plan works, then the clients involvement will not be necessary.
+
+Ultimatum Game
+==============
+
+Bandwidth Costs
+===============
 
 Network Panic
 =============
@@ -101,38 +195,37 @@ The network will fail if 51% of hosts cannot be collected together. Imagine a di
 
 When a host realizes that the current indictment has not passed in time, a panic block will be announced. The panic block contains no information except for the indictment that failed to pass, from which a new list of hosts can be derived. Multiple hosts are likely to announce a panic block, these conflicts are resoved by merging the two indictment lists and creating a new block that contains signatures compiled from the two conflicting blocks. Eventually every node that announced a panic block will have merged and a complete list of nodes available to the network will have been compiled.
 
-This block will be the new block after the hard fork, and a completely new network understanding will be formed. It is likely that a large amount of data has been lost to the network, but all partial files will be kept for as long as they would have normally been kept, because even if the network is segmented there are still wallets paying for disk storage. The network now carries on like normal.
+This new block will be the new network identifier, chained on top of the previous network identifiers. Network identifiers are used to identify divergent networks.
 
 
 Merging Networks
 ================
 
-Networks can split up (through panicking) into sizes that are smaller than 51% of the network, which means that it is possible for multiple panicked networks to exist that do not see each other. If they at some point reconnect, they will have conflicting block chains.
+Networks can split up (through panicking) into sizes that are smaller than 51% of the network, which means that it is possible for multiple panicked networks to exist that do not see each other. If they at some point reconnect, they will have conflicting block chains. They will attempt to merge.
 
-The first step to conflict resolution is to find the latest common block. If there is no common block in the entire block chain of the two networks, then they are completely independent networks and will not merge. Otherwise there is a single point of divergence for the networks. Divergence will have happened under two types of circumstances: one network proceeded like normal and one network entered a panic state, or both networks entered a panic satate. The only other way for a divergence is if one network had an error in the block chain, because without errors or panic states, the bytecoin network is completely deterministic.
+The first step to conflict resolution is to find the latest common block. If there is no common block in the entire block chain of the two networks, then they are completely independent networks and will not merge. Otherwise there is a single point of divergence for the networks. Divergence will have happened under three types of circumstances:
+	* one network proceeded like normal and one network entered a panic state 
+	* both networks entered a panic satate
+	* one of the networks has made a mistake
 
-In the event that only one network panicked, a merge is fairly easy. All transcations in the panicked network that are compatible with the unpanicked network (which is to be considered the real network) will be merged into the real network, and all transactions that are not compatible with the real network will be rejected outright. Transactions will be merged in the order that they were announced to the panicked network. Wallets and hosts in the panicked network are likely to lose a lot of money, but that is to be considered a casualty of being separated from the greater network. Network panic should be something that never happens except in moments of extreme crisis, so this should not be a problem very often.
+One network panicked and hard forked, while the other network did not need to panic:
+In the event that only one network panicked, a merge is fairly easy. All transcations in the panicked network that are compatible with the unpanicked network (which is to be considered the real network) will be merged into the real network, and all transactions that are not compatible with the real network will be rejected outright. Transactions will be merged in the order that they were announced to the panicked network. Data in the merging network will be intially rejected, because of risk of conspiracy. It will have to bootstrap to the network the same way a new host will bootstrap to the network. Wallets and hosts in the panicked network are likely to lose a lot of money, but that is to be considered a casualty of being separated from the greater network. Network panic should be something that never happens except in moments of extreme crisis, so this should not be a problem very often.
 
-In the event that two panicked networks meet, they must go through a lengthy merge process which involves proving to eachother that all of the filespace is legitimate. I will address this process later.
+Two panicked networks need to merge together:
+In the event that two panicked networks meet, the network that had more signitures on the indictment on the panic block recieves precendence, and then the two merge like normal.
 
-The name of a particular network is the hash of the most recent point of divergence. This will either be the genesis block, the most recent panic block, or the block chosen to be the new genesis block.
+Neither network hard forked:
+Either one of the networks made a mistake at some point in the block chain, or the two networks are actually completely different networks.
+
+Subchains
+=========
+
+The final feature of bytecoin is subchains, something that really unlocks the network. Subchains will be the method for integrating anonymity into the network, for integrating with other cryptocurrencies, all of it allowing bytecoin to be the 'master' blockchain from which the others can derive stability.
+
+
 
 === Previous readme (so I do not forget anything) ===
-
-The biggest shift is in the way that the block chain fucntions and maintains
-stability. The sacrifice that had to be made was the ability to shift between
-forked chains. With bitcoin, a fork (or potential fork) is solved by looking at
-the depth on each block chain. The longest chain (or deepest) is chosen as the
-one true block to be incorporated into the block chain. With bytecoin, a
-deterministic model is used to determine which blocks are potentially valid.
-
-With bitcoin, that might be dangerous because the act of mining bitcoins is not
-deterministic at all. Any node could find the next block and luck determines
-which node gets the bitcoins. With bytecoins, the nodes in charge of finding
-the next block are predetermined - the luck portion of the equation is sorted
-out multiple blocks ahead of time.
-
-When it is time to push a transaction to the network, a client will submit
+when it is time to push a transaction to the network, a client will submit
 the transaction to the node that will be solving the block that the transaction
 appears in. It can do this, because unlike bitcoin, the node is known ahead of
 time. The node responsible for solving the block will sign the transaction and
@@ -141,182 +234,6 @@ the node that the transaction will make it into the block chain. If the node
 does not put the transaction into the blockchain, the client can cry foul,
 providing the signed transaction as proof, and then the node will be thrown
 from the network.
-
-
-=========
- Alteration
-========
-
-	I confess, the three nodes idea was a bit nieve and doesn't actually get
-	at the heart of the problem and might actually leave more vulnerabiliteis than
-	we started with.
-
-	Instead, blocks are protected by the same 51% rule that protects bitcoin. A
-	single node at a time is responsible for compiling a block, based on how much
-	file space they are contributing to the network, chosen deterministically
-	based on the hash of a previous block.
-
-	That node then has a certain period of time to announce a block containing
-	all of the compiled transactions from the network. If the node fails to
-	provide such a block in a timely manner, the network can vote to skip the
-	node. If 51% space of the network agrees to move to the next node, then
-	a block will be announced (by the first node to hit 51%), and then the 
-	node will be skipped and the next in line can produce the block.
-		(should probably have some method for jumping the gun in the event
-		of attack - many nodes simultaneously produce a block but then
-		only 1 gets to be the final arbiter)
-
-	"respending - to solve the problem of merging a spend that never got
-	picked up in the first place - btc must have some sort of solution
-	for this...?"
-
-
-Each block, three nodes are responsible for compiling the transaction and the
-blcok data. They will have a list of all transactions that occured between 
-their block and the previous block, and they will compile the transactions
-and announce a block to the network. The three nodes may produce different
-results. This is okay, because just as the nodes have been chosen ahead of
-time, a pecking order has also been chosen. What happens is that the 3 blocks
-are merged together into a single block, all unique transactions included
-into the network. In the event of a double spend, the spend included by the
-node of highest priority will be included into the blockchain. In the event of
-dishonesty (IE a node includes a double spend in a compiled block) the block
-from that node is rejected and the node is thrown out of the network.
-
-If a node fails to deliver a block in time, that block is inserted into the
-network as an empty block. If all three nodes fail to produce a block into
-the network, then that entire block is lost. This should not be a common
-occurance, and will hopefully not inconvenience too many people. Nodes will
-be considered as failed if they are dishonest, however it is also possible
-that they will be in some sort of physical trouble (like a power outage) that
-renders them unable to provide a block.
-
-Such a method for tracking transactions and handling a blockchain completely
-removes the need for mining. The only point of vulnerability is in being
-severed from the network, or being conned into believing you are in the real
-network when you are actually in a fork of the network.
-
-The problem of tracking transactions has been solved, but mining is still a
-conundrum. This is solved by the contribution of disk storage to the bytecoin
-network. 
-
-People can contribute to the bytecoin network by contributing disk space - 
-they host files on their machines in return for access to newly minted coins.
-But it's actually more than that: because bytecoin contributes disk space as a
-commodity with actual market value, contributors to the network are able to
-charge for their services, in effect double dipping - getting mining rewards
-from the bytecoin network as well as getting fees for hosting other people's
-files on their machines.
-
-This means that just like bitcoin, anybody willing to contribute to the network
-has a fair chance at mining the currency. It also means that there is a huge
-potentially for very cheap disk storage on a cloud network, so cheap that it
-may make services like dropbox and google drive irrelevant.
-
-There is a cryptographic problem here: how do we know that a person is actually
-contributing all of the disk space that they are claiming, how do we know that
-files are not being sent immediately to /dev/null?
-
-Before uploading a file to the network, a client will make a series of
-cryptographic puzzles that can only be solved if the file is available. The
-nieve implementation of these cryptographic puzzles involves the use of the
-public key system. To produce one puzzle, the client takes a cryptographic
-string and hashes it against the entire file, creating a private key. The
-private key is then used to create a public key. Finally, the client encrypts
-a random string using the public key and then stores the public key, the 
-unencrypted string, and the encrypted string. The puzzle is then to find the
-private key that can be combined with the public key and the cryptographic text
-to produce the randomly chosen string. The client must also store the random
-string that was originally chosen to hash against the whole file.
-
-When the client wishes for a host to prove that they have the file, the client
-need only present the 4 pieces and ask the host to produce the private key that
-solves the puzzle. The host will be able to produce the private key by using the
-same random string as the client and hashing it against the file. One the host
-has the private key, the host will announce it and the network can verify
-collectively that this private key solves the puzzle. The host can then be
-confirmed to still have the file in question.
-
-This challenge only works one time of course, because the host can then cache
-the private key and use it for all future challenges. That's why the client
-must make a series of puzzles - a different starting random string will be
-needed each time to insure that the host cannot just cache the private keys.
-Furthermore, the random strings must be kept secret from the network until the
-client is ready for the hosts to prove that they are still holding the file.
-
-This means that the client must still store some information, even when they
-are storing things on the network. This is okay, because the client will need
-to be responsible for the coin wallet anyway, and the size of the puzzles
-should be substantially smaller than the size of the files being stored on the
-network.
-
-The next problem is the problem of conspiracy. If two people collaborate, they
-can pretend to store an infinite amount of data on the network and get all of
-the newly mined coins. The works by one person storing perfectly predictable
-data, such as a series of 0s. The other person does not need to keep that
-informaiton on disk, they will be able to solve cryptographic puzzles all day
-while pretending to store exabytes of data on the network from their dinky
-laptop.
-
-To prevent this, measures must be taken to insure that clients have no control
-over which hosts recieve the data, and hosts have no control over which clients
-they service. The first measure is that newly added filespace to the network
-cannot be inserted to directly. This is to prevent one person from adding a
-large amount of space and then having their friend fill it right away with
-predictable data. New files must be added into the disk space that has been
-available on the network for a long time, in a random fashion that is heavily
-weighted towards the disk space that has had the same file for the longest.
-
-When a new file is added to space that has been filled for a long time, it
-bumps an old file out of the way. The old file then moves into the new space.
-This means that the file being added to the new space is essentially some
-random file from the network, instead of the new file being added by the
-potential consiprators. 
-
-Finally, which node the client's file ends up on depends on the hash of the
-file, however to further remove control from the client's hands, the hash of
-the file is then hashed against the block released after the client announces
-an intent to store the file. Because the client cannot predict what the hash
-of the block will be, the client cannot manipulate the hash such that a
-predictable file (like all 0s) ends up on a friend's machine.
-
-I do not think that this security model is perfect,
-but I believe that the most major hurdels have been cleared, and that
-perfecting the model is as simple as figuring out what other attacks have not
-yet been considered.
-
-The entire network will act as a market maker for the commodity of file
-storage. Hosts will contribute filespace to the network and in return get an
-explicit amount of money, decided by the current block. Clients will also pay
-an explicit amount of money decided by the current block. These prices exclude
-the rewards that hosts get for mining data on the network. An equilibrium will
-be established based on variance that sets a price such that as much disk space
-is being sold to consumers at once as possible without ever actually running
-out of disk space. Clients must always be able to buy more space, so the price
-must be set high enough that there is never a moment where there is no free
-space on the network for a client to buy. The exact equation for deciding the
-prices is still up for debate.
-
-The amount of currency added to the network per day is constant. The block rate
-is not constant, so the amount of currency added to the network for a specific
-block depends on the amount of time that it took to compute the previous block.
-This is not quite true; the network actually bases all decisions two blocks
-into the past. Therefore, the amount of currency added for a given block
-depends on the amount of time between the second-most-recent block and the
-thrid-most-recent-block.
-
-The hash of the third most recent block gives random information about which 
-three nodes are in charge of finding the next block. Nodes are chosen randomly
-by the hash according to how much disk space they are hosting. Hosting twice
-the disk space gives twice the chance of being chosen to mine the block. The
-reward for being the person to mine the block is actually rather small by
-comparison to bitcoin - perhaps a 2% fee as opposed to the full 100%. The rest
-of the mined coins are distributed to all the nodes hosting filespace according
-to the volume of space they are hosting. Compiling blocks is viewed as a chore
-and not as a rewarding thing. There is a reward but it is small. I do not think
-that the small reward will discourage people from computing the blocks,
-especially because there will be a penalty for failing to compute a block -
-though the penalty is yet to be decided.
 
 I now bring up the idea of conditional spending plus awareness of external
 networks. This provides an environment for trades like: If bitcoin wallet A
@@ -356,24 +273,3 @@ host will be fined a little bit beyond that (rather, the host will lose a
 deductible that they paid before the bandwidth transfer started). The cost of
 the fine and severity of the punishemnt are determined by the network, not by
 the client or host.
-
-I said finally, but then I forgot about consistency and redundancy. Hosts
-cannot be trusted to hold onto files - websites go down and so do hosts.
-Because of this, a file is not uploaded to the network to a single host in its
-original form. The client first chooses an amount of redundancy (following a
-system like Tahoe-LAFS) establishing how much redundancy is desired and what
-type of RAID array should be used when storing the file on hosts. The network
-will then keep track of when a host goes down, and will react immediately to
-rebuild the file from the redundant pieces held on other hosts.
-
-
-I have not gone into specific details like what should be contained in a block
-or how everything should look exactly, but I believe that in this README I have
-covered all of the major points, enough that one should be able to construct a
-functional protocol. I intend to construct such a protocol over the next few
-months, along with a first implementation of that protocol. In order to improve
-the health of the cryptocurrency ecosystem, bytecoin shoud rely on hashing and
-cryptographic algorithms that are not currently found in the cryptocurrency
-ecosystem. My proposal is SHA3 for all hashing and whatever public key cipher
-is currently regarded as the most trusted (because currently no cryptocurrency
-uses public keys).
