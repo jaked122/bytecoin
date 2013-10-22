@@ -89,6 +89,35 @@ does not put the transaction into the blockchain, the client can cry foul,
 providing the signed transaction as proof, and then the node will be thrown
 from the network.
 
+
+=========
+ Alteration
+========
+
+	I confess, the three nodes idea was a bit nieve and doesn't actually get
+	at the heart of the problem and might actually leave more vulnerabiliteis than
+	we started with.
+
+	Instead, blocks are protected by the same 51% rule that protects bitcoin. A
+	single node at a time is responsible for compiling a block, based on how much
+	file space they are contributing to the network, chosen deterministically
+	based on the hash of a previous block.
+
+	That node then has a certain period of time to announce a block containing
+	all of the compiled transactions from the network. If the node fails to
+	provide such a block in a timely manner, the network can vote to skip the
+	node. If 51% space of the network agrees to move to the next node, then
+	a block will be announced (by the first node to hit 51%), and then the 
+	node will be skipped and the next in line can produce the block.
+		(should probably have some method for jumping the gun in the event
+		of attack - many nodes simultaneously produce a block but then
+		only 1 gets to be the final arbiter)
+
+	"respending - to solve the problem of merging a spend that never got
+	picked up in the first place - btc must have some sort of solution
+	for this...?"
+
+
 Each block, three nodes are responsible for compiling the transaction and the
 blcok data. They will have a list of all transactions that occured between 
 their block and the previous block, and they will compile the transactions

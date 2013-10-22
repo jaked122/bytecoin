@@ -4,10 +4,27 @@ Table of Contents
 1. Proof-of-Contribution
 	* how it is different from proof-of-work
 	* proof-of-contribution is effectively a reputation system
+	* tethering the currency to a network with real value
 
-2. Definitions
+2. Conditional Spending
+	* enabling risk free interactions
+	* limited language to protect parsers
 
-3. Progression of the block chain
+3. Subchains
+	* unspendable wallets
+	* (?) multiple options for validating subblocks
+	* keynodes
+	* (?) confirming via file hosting
+	* (?) confirming via hashcash
+	* (?) confirming via primes?
+
+3. Justice Transactions
+	* pay extra to punish the provider
+	* importance of anonymity to minimize malice
+
+4. Definitions
+
+5. Progression of the block chain
 	* what is a block chain and why one is needed
 	(!) * what is stored in the bytecoin block chain
 	* finding blocks
@@ -15,47 +32,51 @@ Table of Contents
 	* time alotted for mining
 	* which transactions should be included in the block
 
-4. Mining
-	* a constant mining rate
-	* timestamping
-	* distribution of mined coins
-
-5. Payment for Hosting
-	* selling the file storage commodity
-	* inherent value leads to stability
-
 6. Hosting Files
 	* cheating is possible
 	* contributions must be *new*
 	* contributions must be *available to everyone*
+	* bandwidth modifications here
 
-7. Preserving Files
+7. Mining While Hosting
+	* a constant mining rate
+	* timestamping
+	* distribution of mined coins
+
+8. Payment for Hosting
+	* selling the file storage commodity
+	* inherent value leads to stability
+	* payment is put into a pool that is distributed evenly among hosts
+
+9. Preserving Files
 	* erasure coding
 	* bytecoin reliability and file loss potential
 	* picking redundacny
+	* hosts provide a death deposit
+	* replacing hosts when they disappear
 
-4. Network Panic
+10. Load Balancing
+	* reddit hug problem
+	* min bandwidth solution
+	* dynamically adjusting the min bandwidth
+	* min min set by paying client
+	* other clients can take over payment
+	* files literally broken into ~1000 pieces for high recovery performance, and risiliance to DOS attacks
+
+11. Dishonest Hosts
+
+12. Network Panic
 	* determining that the network is in a panicked state
 	* intentional strong forking
 	* permanent fragmenting (forcing a new 'initial' block)
 
-5. Merging Networks
+13. Merging Networks
 	* merging an unpanicked network with a panicked network
 	* merging two panicked networks
 
-5. Pushing transactions to the network
-	* "early" confirms
-	* constant fee depending on which tier of the system you are in
-
-7. Bandwidth Limits
-8. Ultimatum Game
-
-8. Conditional Spending
-
-9. Load Balancing and Management
-	* designed to fight situations like the reddit hug
-
-10. Wallets
+15. Wallets
+	* just like bitcoin wallets?
+	* no messages, just transactions
 
 
 Proof-of-Contribution
@@ -64,6 +85,12 @@ Proof-of-Contribution
 Proof-of-contribution is like proof-of-work, except that instead of performing computations to achieve a hash, the computer in question provides resources ("contributions") to a network that can then be used by other participants in the network. The particular commodity of the bytecoin network is disk storage. Your contribution makes up a certain percent of the network, and that contribution directly relates to the amount of coins that you mine.
 
 If you abstract proof-of-contribution to a higher level view, you realize that it is effectively a reputation system. Initially, there are a set of nodes each with a volume of reputation (their confirmed contribution). When new nodes come and add contributions to the network, these nodes recieve reputation in accordance to their contribution. It is stronger than a typical reputation system because contribution is a difficult task requiring the deployment of real world resources (IE contributing file storage space to the network).
+
+
+Conditional Spending
+====================
+
+The network supports a very basic conditional language that can place limitations on a transaction. On example of a conditional transaction is "Send wallet A 300 coins if wallet A sends 1000 coins to wallet B." A full language specification will be available, but the language will have inherent limitations so that the cost of processing conditional spends is very low. Conditions will relate to specific network states, and will be completely verifyable by peering back into the block chain. Conditional spending may have implications about breaking the blockchain into large volumes of parallel chains.
 
 
 Definitions
@@ -113,6 +140,21 @@ Because hosts are chosen ahead of time, there is a chance that the host will fai
 The amount of time allotted to a host for finding a block is adjusted with the speed of the network. If a host gets indicted for being too slow, the network extends the amount of time that the next host has to find a block. If a host releases a block on time or early, the network decreases the amount of time allotted for finding blocks. On a network with sufficiently fast hosts, a new block could be theoretically released every few seconds. This will probably be the case during the early days of the network, however as the network grows to global scale the block speed will probably decrease dramatically.
 
 Because hosts are known ahead of time, all transactions can be forwarded to the host compiling a block, decreasing the amount of chatter on the network. To further clean up the network, the host that should recieve the current network transactions should be the host that is responsible for mining the *next* block, not the current block. By the time the previous block has been released, the next host should already have all the transactions for the next block, and can release the block faster. Any transactions sent to the host late (because of network lag and inconsistency) will be forwarded to the next host.
+
+The block chain is a collection of wallets, and the properties of the wallets contain the remaining information necessary to derive everything else. A wallet is represented in the block chain by its public key. The hash of the public key is the address of the wallet. Each wallet has these sets of things: available currency, files that it is hosting, files that it is paying for, free space that it is advertising (as a host), and a list of conditional statements active on the wallet. As a struct, it would look like this:
+
+// You will notice that this is not actually C code, the structs will have to be parsed as data streams
+struct Wallet {
+	uint64_t currencyHigh;
+	uint64_t currencyLow; // 128 bits of precision
+	uint64_t numFilesSupporting;
+	struct filesSupporting[numFilesSupporting];
+	uint64_t numFilesHosting;
+	struct filesHosting[numFilesHosting];
+	uint64_t numFreeSpaces;
+	uint64_t numConditionalStatements;
+	struct conditionalStatements[numConditionalStatements];
+}
 
 Mining
 ======
@@ -185,8 +227,14 @@ Hosts will be required to prove hosting every so often, and they will not be pai
 Ultimatum Game
 ==============
 
+In bytecoin, you pay for a service, and sometimes the service may not be consistent with what was promised. Here we use the example of bandwidth. Say you request a file from a host promising to deliver at 10mpbs. When the host gives you the file at 5mbps, this host has lied. You paid top dollar for your 10mbps service and got measly 5mbps service. In a nonflexible system, the host would get paid for delivering 10mbps and you would have paid for 10mbps service. In bytecoin, you can pay an extra 50% to punish the host. Your complaint will remove the amount you paid the host, and then punish the host an additional 50%. The end result is that you paid 1.5x 10mbps price, but the host loses money instead of makes profit. This makes it highly unprofitable for the host to advertise a 10mbps service when they cannot fulfill the commitment.
+
+The game theory idea is that no satisfied customer would ever punish the host for delivering the advertised price, and that an angry customer would be angry enough to spend more and punish the host, even though they need to spend more in order to punish the host.
+
 Bandwidth Costs
 ===============
+
+Hosts are required to maintain a minimum bandwidth speed. Some files may also have minimum bandwidth requirements, which will be achieved through increasing redundancy until all of the requirements are met. When a host is found lying about unloading capabilities, the host can be punished through using the bytecoin ultimatum punishment.
 
 Network Panic
 =============
@@ -222,54 +270,10 @@ Subchains
 
 The final feature of bytecoin is subchains, something that really unlocks the network. Subchains will be the method for integrating anonymity into the network, for integrating with other cryptocurrencies, all of it allowing bytecoin to be the 'master' blockchain from which the others can derive stability.
 
+Conditional Spending
+====================
 
+Wallets
+=======
 
-=== Previous readme (so I do not forget anything) ===
-when it is time to push a transaction to the network, a client will submit
-the transaction to the node that will be solving the block that the transaction
-appears in. It can do this, because unlike bitcoin, the node is known ahead of
-time. The node responsible for solving the block will sign the transaction and
-return the signed transaction to the client. The client now has a promise from
-the node that the transaction will make it into the block chain. If the node
-does not put the transaction into the blockchain, the client can cry foul,
-providing the signed transaction as proof, and then the node will be thrown
-from the network.
-
-I now bring up the idea of conditional spending plus awareness of external
-networks. This provides an environment for trades like: If bitcoin wallet A
-sends X coins to bitcoin wallet B, then I will send Y bytecoins to bytecoin
-wallet C. Conditional spending also allows clients to say something like
-"Host file A on the network until the price of hosting exceeds X or until
-the total amount spent hosting this file exceeds Y." When somebody makes
-a conditional spend, they 'spend' the coins up front, meaning the network
-removes the coins from the clients wallet. Then, if the condiiton is filled
-the network will send the coins to their appropriate destination. If the 
-transaction expires before the condition is filled, then the network will
-return the coins to the original wallet that spent them.
-
-The final problem is the problem of bandwidth. The network will enforce a
-minimum bandwidth for hosts based on how much data they are hosting. As a
-temporary suggestion, clients downloading a file from a host should expect to
-get a full 1 mbps per 1 GB that they download, meaning that all files should
-finish downloading within about 3 hours. (This does seem fast, maybe the
-minimums will be relaxed). Since I could find no way to cryptographically
-verify that someone had sent an appropriate amount of bandwidth to a client at
-an appropriate speed, I chose instead to rely on a social game.
-
-When downloading something, a client will pay a markey price for the bandwidth,
-probably determined by the current price of file space. When the file is done
-downloading, the client has the option to report the host to the network and
-complain about the host being to slow or just simply not delivering the file at
-all. The key dynamic is that the client has already paid for the file, and will
-not be refunded under any cirucumstances. Additionally, the client must pay
-even more money to have the host punished. In a game theory sense, there is no
-reason for the client to punish the host because the client can only lost more
-money. But from a societal perspective, it is like the ultimatum game. If the
-client feels slighted, they can extend a small amount of additional harm upon
-themselves to punish the host. If the client chooses to punish the host, the
-host will not recieve the coins from the transaction (the coins are instead
-donated back to the network in the form of decimation) and additionally the
-host will be fined a little bit beyond that (rather, the host will lose a
-deductible that they paid before the bandwidth transfer started). The cost of
-the fine and severity of the punishemnt are determined by the network, not by
-the client or host.
+Wallets are public keys, which can be used to sign transactions. The block chain tracks a bunch of information related to each wallet.
