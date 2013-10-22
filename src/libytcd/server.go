@@ -7,12 +7,19 @@ import (
 )
 
 type ytcServer struct {
-
+    state map[Account]YTC
+    transactions [] Transaction
 }
 
 func NewYtcd() (y * ytcServer) {
     y = new(ytcServer)
     return
+}
+
+func (y * ytcServer) AddTransaction(t Transaction) {
+    y.transactions = append(y.transactions, t)
+    y.state[t.Source] -= t.Amount
+    y.state[t.Destination] += t.Amount
 }
 
 func (y * ytcServer) Listen(addr string) (err error) {
