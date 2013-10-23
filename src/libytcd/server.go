@@ -28,6 +28,12 @@ func loadHomepage(w http.ResponseWriter, r *http.Request) {
 
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "learning how to parse http requests")
+	// error checking on request
+	// t := {http request body}
+	// error checking on t
+	// verifying signature on t
+	// AddTransaction(t)
+	// send non error response?
 }
 
 func (y *ytcServer) AddTransaction(t Transaction) {
