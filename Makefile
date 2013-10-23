@@ -1,7 +1,7 @@
 all: bin/ytcd
 
 bin/ytcd: src/ytcd/*.go src/libytcd/*.go
-	rm -f bin/skeleton
+	rm -f bin/ytcd
 	GOPATH=$(CURDIR) go install ytcd
 
 test: all
