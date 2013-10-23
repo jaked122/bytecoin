@@ -1,7 +1,7 @@
 package libytcd
 
 import (
-	//"net/http"
+//"net/http"
 )
 
 func PostTransaction(src Account, dest Account, amount YTCVolume) {
