@@ -1,11 +1,12 @@
 package libytcd
 
 type Account string
-
-type YTC uint64
+type YTCVolume uint64
+type SignedTransaction string
 
 type Transaction struct {
     Source Account
     Destination Account
-    Amount YTC
+    Amount YTCVolume
+    Signature SignedTransaction
 }
