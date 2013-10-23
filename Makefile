@@ -11,6 +11,11 @@ bin/ytcClient: src/ytcClient/*.go src/libytcd/*.go
 test: all
 	GOPATH=$(CURDIR) go test ytcd libytcd
 
+fmt:
+	go fmt src/ytcd/*.go
+	go fmt src/libytcd/*.go
+	go fmt src/ytcClient/*.go
+
 clean:
 	rm -f bin/ytcd
 	rm -f bin/ytcClient
