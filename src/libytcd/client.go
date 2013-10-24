@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func PostTransaction(src Account, dest Account, amount YTCVolume) {
+func PostTransaction(src Account, dest Account, amount Volume) {
 	var t Transaction
 	t.Source = src
 	t.Destination = dest

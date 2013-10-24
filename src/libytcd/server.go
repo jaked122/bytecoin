@@ -49,15 +49,7 @@ func (y *ytcServer) handleTransaction(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
-	// currently n is returning as '0', which suggests that the body is empty?
-	// will debug later
-
-	// error checking on request
-	// t := {http request body}
-	// error checking on t
-	// verifying signature on t
 	y.b.AddTransaction(*t)
-	// send non error response?
 }
 
 func (y *ytcServer) Listen(addr string) (err error) {
