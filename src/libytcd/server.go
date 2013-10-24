@@ -1,8 +1,10 @@
 package libytcd
 
 import (
-	"fmt" // testing purposes
+	"encoding/json"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -13,29 +15,38 @@ const (
 )
 
 type ytcServer struct {
-	state        map[Account]YTCVolume
-	transactions []Transaction
+	b *BlockChain
+	d *http.ServeMux
 }
 
 func NewYtcd() (y *ytcServer) {
 	y = new(ytcServer)
+	y.b = NewBlockChain()
+
+	y.d = http.NewServeMux()
+	y.d.HandleFunc(root, y.loadHomepage)
+	y.d.HandleFunc(postTransaction, y.handleTransaction)
+
 	return
 }
 
 // Will eventually load html explaining how to get started?
-func loadHomepage(w http.ResponseWriter, r *http.Request) {
+func (y *ytcServer) loadHomepage(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "hello, world")
 }
 
-func handleTransaction(w http.ResponseWriter, r *http.Request) {
+func (y *ytcServer) handleTransaction(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "learning how to parse http requests")
 
-	var output []byte
-	n, err := r.Body.Read(output)
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Printf("%v\n", err)
-	} else {
-		fmt.Printf("%v\n", n)
+		log.Print(err)
+	}
+
+	t := new(Transaction)
+	err = json.Unmarshal(b, t)
+	if err != nil {
+		log.Print(err)
 	}
 
 	// currently n is returning as '0', which suggests that the body is empty?
@@ -45,25 +56,14 @@ func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	// t := {http request body}
 	// error checking on t
 	// verifying signature on t
-	// AddTransaction(t)
+	y.b.AddTransaction(*t)
 	// send non error response?
 }
 
-func (y *ytcServer) AddTransaction(t Transaction) {
-	y.transactions = append(y.transactions, t)
-	y.state[t.Source] -= t.Amount
-	y.state[t.Destination] += t.Amount
-}
-
 func (y *ytcServer) Listen(addr string) (err error) {
-
-	d := http.NewServeMux()
-	d.HandleFunc(root, loadHomepage)
-	d.HandleFunc(postTransaction, handleTransaction)
-
 	s := &http.Server{
 		Addr:           addr,
-		Handler:        d,
+		Handler:        y.d,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
