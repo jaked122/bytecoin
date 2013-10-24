@@ -1,7 +1,10 @@
 package libytcd
 
 import (
-//"net/http"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
 )
 
 func PostTransaction(src Account, dest Account, amount YTCVolume) {
@@ -9,8 +12,24 @@ func PostTransaction(src Account, dest Account, amount YTCVolume) {
 	t.Source = src
 	t.Destination = dest
 	t.Amount = amount
-	t.Signature = "true"
+	t.Signature[0] = 1
 
-	//We can do this if we write a 'Read' function into Transaction
-	//http.Post("127.0.0.1:800/postTransaction", "ytc/transaction", t)
+	// all the printfs will eventually be moved to a test function
+	fmt.Printf("%v\n", t)
+
+	b, err := json.Marshal(t)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	} else {
+		fmt.Printf("%s\n", b)
+	}
+
+	buf := bytes.NewBuffer(b)
+	resp, err := http.Post("http://127.0.0.1:800/postTransaction", "application/json", buf) // not sure what the second field should be
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	} else {
+		fmt.Printf("%v\n", resp)
+	}
 }
