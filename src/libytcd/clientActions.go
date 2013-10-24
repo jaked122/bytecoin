@@ -1,14 +1,10 @@
 package libytcd
 
 import (
-<<<<<<< HEAD
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-=======
-//"net/http"
->>>>>>> 30a32cf6338ef6c730940a60add83de3a5086c20
 )
 
 func PostTransaction(src Account, dest Account, amount YTCVolume) {
