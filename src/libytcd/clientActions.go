@@ -12,7 +12,7 @@ func PostTransaction(src Account, dest Account, amount YTCVolume) {
 	t.Source = src
 	t.Destination = dest
 	t.Amount = amount
-	t.Signature[0] = 1
+	t.Signature = "signature"
 
 	// all the printfs will eventually be moved to a test function
 	fmt.Printf("%v\n", t)

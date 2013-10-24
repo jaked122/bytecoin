@@ -1,8 +1,8 @@
 package libytcd
 
-type Account [64]byte // 512 bits
+type Account string
 type YTCVolume uint64
-type SignedTransaction [64]byte // 512 bits
+type SignedTransaction string
 
 type Transaction struct {
 	Source      Account

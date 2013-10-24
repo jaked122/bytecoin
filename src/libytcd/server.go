@@ -1,8 +1,10 @@
 package libytcd
 
 import (
-	"fmt" // testing purposes
+	"encoding/json"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -19,6 +21,8 @@ type ytcServer struct {
 
 func NewYtcd() (y *ytcServer) {
 	y = new(ytcServer)
+	y.transactions = make([]Transaction, 10)
+	y.state = make(map[Account]YTCVolume)
 	return
 }
 
@@ -30,12 +34,15 @@ func loadHomepage(w http.ResponseWriter, r *http.Request) {
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "learning how to parse http requests")
 
-	var output []byte
-	n, err := r.Body.Read(output)
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Printf("%v\n", err)
-	} else {
-		fmt.Printf("%v\n", n)
+		log.Print(err)
+	}
+
+	v := new(Transaction)
+	err = json.Unmarshal(b, v)
+	if err != nil {
+		log.Print(err)
 	}
 
 	// currently n is returning as '0', which suggests that the body is empty?

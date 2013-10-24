@@ -5,10 +5,8 @@ import (
 )
 
 func main() {
-	var srcAccnt [64]byte
-	var destAccnt [64]byte
+	srcAccnt := libytcd.Account("s")
+	destAccnt := libytcd.Account("d")
 
-	srcAccnt[0] = 's'
-	destAccnt[0] = 'd'
 	libytcd.PostTransaction(srcAccnt, destAccnt, 1234)
 }
