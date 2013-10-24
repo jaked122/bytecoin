@@ -1,6 +1,7 @@
 package libytcd
 
 import (
+	"fmt" // testing purposes
 	"io"
 	"net/http"
 	"time"
@@ -28,6 +29,18 @@ func loadHomepage(w http.ResponseWriter, r *http.Request) {
 
 func handleTransaction(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "learning how to parse http requests")
+
+	var output []byte
+	n, err := r.Body.Read(output)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	} else {
+		fmt.Printf("%v\n", n)
+	}
+
+	// currently n is returning as '0', which suggests that the body is empty?
+	// will debug later
+
 	// error checking on request
 	// t := {http request body}
 	// error checking on t
