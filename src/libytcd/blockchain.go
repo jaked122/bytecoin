@@ -13,6 +13,8 @@ type StoreSize uint64
 type DHTLoc string
 type Time time.Time
 
+type FileID string
+
 type Transaction struct {
 	Source      Account
 	Destination Account
@@ -27,6 +29,16 @@ type StorageAnnounce struct {
 	Size        StoreSize
 	Location    DHTLoc
 	Signature   Signature
+}
+
+type StorageRent struct {
+	Source     Account
+	Size       StoreSize
+	Servers    uint64
+	Redundancy float64
+	ID         FileID
+	Expiration Time
+	Signature  Signature
 }
 
 type BlockChain struct {
@@ -69,9 +81,8 @@ func (b *BlockChain) AddTransaction(t Transaction) (err error) {
 	return nil
 }
 
-func (b *BlockChain) VerifyAnnouceStorage(s StorageAnnounce) (err error) {
+func (b *BlockChain) VerifyAnnouceStorage(a StorageAnnounce) (err error) {
 
-	// check that source exists
 	// check that source can pay deductable
 
 	// check that destination exists
@@ -83,11 +94,47 @@ func (b *BlockChain) VerifyAnnouceStorage(s StorageAnnounce) (err error) {
 	return nil
 }
 
-func (b *BlockChain) AnnounceStorage(s StorageAnnounce) (err error) {
-	err = b.VerifyAnnouceStorage(s)
+func (b *BlockChain) AnnounceStorage(a StorageAnnounce) (err error) {
+	err = b.VerifyAnnouceStorage(a)
 	if err != nil {
 		return err
 	}
 
+	// add free space to host binSortTree
+
 	return nil
+}
+
+func (b *BlockChain) VerifyRentStorage(r StorageRent) (err error) {
+
+	// check that source can afford to host the file
+
+	// check that there is enough space on the network for the file + redundancy (??) { files may be atomic in size - 1 MB each or something, and large files just need to be split up
+
+	// check that there are enough servers on the network
+
+	// check that the ID is not being used by the wallet already
+
+	// read expiration
+
+	// check that the signature is valid
+
+	return nil
+}
+
+func (b *BlockChain) RentStorage(r StorageRent) (err error) {
+	err = b.VerifyRentStorage(r)
+	if err != nil {
+		return err
+	}
+
+	// file doesn't go into the block chain right away, we need to know the block
+	// after this block before we can determine where the file belongs
+
+	// so instead this trade is going to go into a queue that will be processed later
+	// when the block after next is being processed
+
+	// put rent into queue
+
+	return
 }
