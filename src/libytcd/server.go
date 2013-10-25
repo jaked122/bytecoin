@@ -12,6 +12,7 @@ import (
 const (
 	root            = "/"
 	postTransaction = "/postTransaction"
+	announceStorage = "/announceStorage"
 )
 
 type ytcServer struct {
@@ -26,6 +27,7 @@ func NewYtcd() (y *ytcServer) {
 	y.d = http.NewServeMux()
 	y.d.HandleFunc(root, y.loadHomepage)
 	y.d.HandleFunc(postTransaction, y.handleTransaction)
+	y.d.HandleFunc(announceStorage, y.handleAnnounceStorage)
 
 	return
 }
@@ -35,21 +37,58 @@ func (y *ytcServer) loadHomepage(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "hello, world")
 }
 
-func (y *ytcServer) handleTransaction(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "learning how to parse http requests")
-
+func (y *ytcServer) handleAnnounceStorage(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		io.WriteString(w, err.Error())
 		log.Print(err)
+		return
+	}
+
+	s := new(StorageAnnounce)
+	err = json.Unmarshal(b, s)
+	if err != nil {
+		io.WriteString(w, err.Error())
+		log.Print(err)
+		return
+	}
+
+	err = y.b.AnnounceStorage(*s)
+	if err != nil {
+		io.WriteString(w, err.Error())
+		log.Print(err)
+		return
+	}
+
+	// Eventually return details of announce
+	io.WriteString(w, "AnnounceStorage Success")
+}
+
+func (y *ytcServer) handleTransaction(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		io.WriteString(w, err.Error()) // is this secure?
+		log.Print(err)
+		return
 	}
 
 	t := new(Transaction)
 	err = json.Unmarshal(b, t)
 	if err != nil {
+		io.WriteString(w, err.Error())
 		log.Print(err)
+		return
 	}
 
-	y.b.AddTransaction(*t)
+	err = y.b.AddTransaction(*t)
+	if err != nil {
+		io.WriteString(w, err.Error())
+		log.Print(err)
+		return
+	}
+
+	// Eventually return details of transaction
+	io.WriteString(w, "Transaction Success")
 }
 
 func (y *ytcServer) Listen(addr string) (err error) {
