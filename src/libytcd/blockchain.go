@@ -1,9 +1,32 @@
 package libytcd
 
 import (
-	"errors"
 	"time"
 )
+
+type FileSpace uint64
+type FileHash string
+type HostHash string
+type YTCAmount uint64
+type Location string
+type Proofs string
+type Address string
+
+type HostRecord struct {
+	SpaceAvailable FileSpace
+	StoredFiles    []FileHash
+	Balance        YTCAmount
+	Location       Address
+	ID             HostHash
+}
+
+type FileRecord struct {
+	Balance  YTCAmount
+	Proofs   []Proofs
+	Hosts    []HostHash
+	ID       FileHash
+	Metadata struct{}
+}
 
 type Account string
 type Volume uint64
@@ -13,81 +36,26 @@ type StoreSize uint64
 type DHTLoc string
 type Time time.Time
 
-type Transaction struct {
-	Source      Account
-	Destination Account
-	Amount      Volume
-	Expiration  Time
-	Signature   Signature
+type Block struct {
+	Hosts map[HostHash]HostRecord
+	Files map[FileHash]FileRecord
 }
 
-type StorageAnnounce struct {
-	Source      Account
-	Destination Account
-	Size        StoreSize
-	Location    DHTLoc
-	Signature   Signature
+func NewBlock() (b *Block) {
+	b = new(Block)
+	b.Hosts = make(map[HostHash]HostRecord)
+	b.Files = make(map[FileHash]FileRecord)
+	return
 }
 
 type BlockChain struct {
-	state        map[Account]Volume
-	transactions []Transaction
+	Blocks   []*Block
+	NewBlock *Block
 }
 
 func NewBlockChain() (b *BlockChain) {
 	b = new(BlockChain)
-	b.transactions = make([]Transaction, 100)
-	b.state = make(map[Account]Volume)
+	b.Blocks = make([]*Block, 100)
+	b.NewBlock = NewBlock()
 	return
-}
-
-func (b *BlockChain) VerifyTransaction(t Transaction) (err error) {
-
-	// need to verify that both src and dest exist
-
-	if b.state[t.Source] < t.Amount {
-		return errors.New("Insufficient Funds")
-	}
-
-	// need to verify that transaction hasn't expired
-
-	// need to verify that the signature is valid
-
-	return nil
-}
-
-func (b *BlockChain) AddTransaction(t Transaction) (err error) {
-	err = b.VerifyTransaction(t)
-	if err != nil {
-		return err
-	}
-
-	b.transactions = append(b.transactions, t)
-	b.state[t.Source] -= t.Amount
-	b.state[t.Destination] += t.Amount
-
-	return nil
-}
-
-func (b *BlockChain) VerifyAnnouceStorage(s StorageAnnounce) (err error) {
-
-	// check that source exists
-	// check that source can pay deductable
-
-	// check that destination exists
-
-	// check that DHT loc is online (make a request through the DHT)
-
-	// check that the signature is valid
-
-	return nil
-}
-
-func (b *BlockChain) AnnounceStorage(s StorageAnnounce) (err error) {
-	err = b.VerifyAnnouceStorage(s)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

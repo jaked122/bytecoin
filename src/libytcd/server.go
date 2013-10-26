@@ -1,10 +1,7 @@
 package libytcd
 
 import (
-	"encoding/json"
 	"io"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 )
@@ -38,18 +35,6 @@ func (y *ytcServer) loadHomepage(w http.ResponseWriter, r *http.Request) {
 func (y *ytcServer) handleTransaction(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "learning how to parse http requests")
 
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Print(err)
-	}
-
-	t := new(Transaction)
-	err = json.Unmarshal(b, t)
-	if err != nil {
-		log.Print(err)
-	}
-
-	y.b.AddTransaction(*t)
 }
 
 func (y *ytcServer) Listen(addr string) (err error) {
