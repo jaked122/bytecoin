@@ -1,8 +1,6 @@
 package libytcd
 
-import (
-	"time"
-)
+import ()
 
 type FileSpace uint64
 type FileHash string
@@ -14,6 +12,7 @@ type Address string
 
 type HostRecord struct {
 	SpaceAvailable FileSpace
+	SpaceUsed      FileSpace
 	StoredFiles    []FileHash
 	Balance        YTCAmount
 	Location       Address
@@ -28,34 +27,19 @@ type FileRecord struct {
 	Metadata struct{}
 }
 
-type Account string
-type Volume uint64
-type Signature string
-
-type StoreSize uint64
-type DHTLoc string
-type Time time.Time
-
-type Block struct {
+type State struct {
 	Hosts map[HostHash]HostRecord
 	Files map[FileHash]FileRecord
 }
 
-func NewBlock() (b *Block) {
-	b = new(Block)
-	b.Hosts = make(map[HostHash]HostRecord)
-	b.Files = make(map[FileHash]FileRecord)
+func NewState() (s *State) {
+	s = new(State)
+	s.Hosts = make(map[HostHash]HostRecord)
+	s.Files = make(map[FileHash]FileRecord)
 	return
 }
 
-type BlockChain struct {
-	Blocks   []*Block
-	NewBlock *Block
-}
-
-func NewBlockChain() (b *BlockChain) {
-	b = new(BlockChain)
-	b.Blocks = make([]*Block, 100)
-	b.NewBlock = NewBlock()
-	return
+type Updates interface {
+	Verify() bool
+	Apply(s *State)
 }

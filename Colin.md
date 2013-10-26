@@ -40,3 +40,6 @@ Update Types
         - Adds Other Host Balance
     Host Addition
         - Adds a possible host storage
+
+Trusted Curve
+25, 519

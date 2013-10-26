@@ -12,13 +12,13 @@ const (
 )
 
 type ytcServer struct {
-	b *BlockChain
+	s *State
 	d *http.ServeMux
 }
 
 func NewYtcd() (y *ytcServer) {
 	y = new(ytcServer)
-	y.b = NewBlockChain()
+	y.s = NewState()
 
 	y.d = http.NewServeMux()
 	y.d.HandleFunc(root, y.loadHomepage)
