@@ -36,6 +36,7 @@ type State struct {
 func NewState() (s *State) {
 	s = new(State)
 	s.Hosts = make(map[HostKey]HostRecord)
+	s.Hosts["hard"] = HostRecord{0, 0, nil, 10, "", "hard"}
 	s.Files = make(map[FileHash]FileRecord)
 	return
 }
