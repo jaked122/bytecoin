@@ -2,6 +2,7 @@ package libytcd
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -42,11 +43,11 @@ func (y *ytcServer) loadHomepage(w http.ResponseWriter, r *http.Request) {
 
 func (y *ytcServer) newWallet(w http.ResponseWriter, r *http.Request) {
 
-	b := make([]byte, 64)
+	b := make([]byte, 8)
 	rand.Read(b)
 
 	h := NewHostUpdate()
-	h.Key = HostKey(b)
+	h.Key = HostKey(hex.EncodeToString(b))
 	h.Signature = "Unimplemented"
 
 	h.Verify(y.s)
@@ -71,7 +72,11 @@ func (y *ytcServer) sendMoney(w http.ResponseWriter, r *http.Request) {
 	t.Amount = YTCAmount(amount)
 	t.Signature = Signature("fu")
 
-	t.Verify(y.s)
+	ok := t.Verify(y.s)
+	if !ok {
+		io.WriteString(w, "false")
+		return
+	}
 	t.Apply(y.s)
 	io.WriteString(w, "true")
 	return
