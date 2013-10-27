@@ -9,7 +9,7 @@ bin/ytcClient: src/ytcClient/*.go src/libytcd/*.go
 	GOPATH=$(CURDIR) go install ytcClient
 
 test: all
-	GOPATH=$(CURDIR) go test ytcd libytcd
+	GOPATH=$(CURDIR) go test ytcd libytcd ytcClient
 
 fmt:
 	go fmt src/ytcd/*.go

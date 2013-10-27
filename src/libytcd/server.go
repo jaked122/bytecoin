@@ -1,10 +1,13 @@
 package libytcd
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -12,6 +15,7 @@ const (
 	root            = "/"
 	postTransaction = "/postTransaction"
 	newWallet       = "/newWallet"
+	sendMoney       = "/sendMoney"
 )
 
 type ytcServer struct {
@@ -26,6 +30,7 @@ func NewYtcd() (y *ytcServer) {
 	y.d = http.NewServeMux()
 	y.d.HandleFunc(root, y.loadHomepage)
 	y.d.HandleFunc(newWallet, y.newWallet)
+	y.d.HandleFunc(sendMoney, y.sendMoney)
 
 	return
 }
@@ -36,8 +41,40 @@ func (y *ytcServer) loadHomepage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (y *ytcServer) newWallet(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "learning how to parse http requests")
 
+	b := make([]byte, 64)
+	rand.Read(b)
+
+	h := NewHostUpdate()
+	h.Key = HostKey(b)
+	h.Signature = "Unimplemented"
+
+	h.Verify(y.s)
+	h.Apply(y.s)
+
+	io.WriteString(w, string(h.Key))
+}
+
+func (y *ytcServer) sendMoney(w http.ResponseWriter, r *http.Request) {
+	b, _ := ioutil.ReadAll(r.Body)
+
+	v := make(map[string]string)
+	_ = json.Unmarshal(b, v)
+
+	source := v["Source"]
+	destination := v["Destination"]
+	amount, _ := strconv.ParseUint(v["Amount"], 10, 64)
+
+	t := NewTransferUpdate()
+	t.Source = HostKey(source)
+	t.Destination = HostKey(destination)
+	t.Amount = YTCAmount(amount)
+	t.Signature = Signature("fu")
+
+	t.Verify(y.s)
+	t.Apply(y.s)
+	io.WriteString(w, "true")
+	return
 }
 
 func (y *ytcServer) HandleNetworkConnection(c net.Conn) {
