@@ -3,6 +3,7 @@ package libytcd
 import (
 	"encoding/json"
 	"errors"
+	"log"
 )
 
 func ParseUpdate(raw []byte) (u Update, err error) {
@@ -27,6 +28,7 @@ func ParseUpdate(raw []byte) (u Update, err error) {
 		err = json.Unmarshal(raw, h)
 		u = h
 	default:
+		log.Print(string(raw))
 		err = errors.New("Invalid Type: " + v.Type)
 	}
 	return

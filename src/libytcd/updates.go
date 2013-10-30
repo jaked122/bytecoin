@@ -41,8 +41,10 @@ func (t *TransferUpdate) Verify(s *State) (err error) {
 func (t *TransferUpdate) Apply(s *State) {
 	source := s.Hosts[t.Source]
 	source.Balance -= t.Amount
+	s.Hosts[t.Source] = source
 	dest := s.Hosts[t.Destination]
 	dest.Balance += t.Amount
+	s.Hosts[t.Destination] = dest
 	return
 }
 
