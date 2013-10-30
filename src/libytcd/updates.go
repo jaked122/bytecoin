@@ -1,7 +1,11 @@
 package libytcd
 
+import (
+	"errors"
+)
+
 type Update interface {
-	Verify(s *State) bool
+	Verify(s *State) (err error)
 	Apply(s *State)
 }
 
@@ -14,24 +18,24 @@ type TransferUpdate struct {
 	//Public Key? Check bitcoin
 }
 
-func (t *TransferUpdate) Verify(s *State) bool {
+func (t *TransferUpdate) Verify(s *State) (err error) {
 
 	_, found := s.Hosts[t.Source]
 	if !found {
-		return false
+		return errors.New("No Such Source")
 	}
 
 	_, found = s.Hosts[t.Destination]
 	if !found {
-		return false
+		return errors.New("No such destination")
 	}
 
 	if t.Amount > s.Hosts[t.Source].Balance {
-		return false
+		return errors.New("Not enough money in source account")
 	}
 
 	//Verify Signature
-	return true
+	return
 }
 
 func (t *TransferUpdate) Apply(s *State) {
@@ -60,19 +64,20 @@ func NewHostUpdate() (h *HostUpdate) {
 	return
 }
 
-func (t *HostUpdate) Verify(s *State) bool {
+func (t *HostUpdate) Verify(s *State) (err error) {
 	// Verify signature from old key
 	o, found := s.Hosts[t.Key]
 	if found && o.Key != t.Key {
-		return false
+		return errors.New("Host collision")
 	}
 
 	//verify Signature
-	return true
+	return
 }
 
 func (t *HostUpdate) Apply(s *State) {
 	host := s.Hosts[t.Key]
 	host.Key = t.Key
+	s.Hosts[t.Key] = host
 	return
 }

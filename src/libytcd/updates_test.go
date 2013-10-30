@@ -11,7 +11,7 @@ func SimpleTest(t *testing.T) {
 	h.Key = "New"
 	h.Signature = "Signature"
 
-	if !h.Verify(s) {
+	if h.Verify(s) != nil {
 		t.Fatal("Failed to verify HostUpdate")
 	}
 
@@ -22,13 +22,13 @@ func SimpleTest(t *testing.T) {
 	r.Destination = "New"
 	r.Amount = 1
 
-	if !r.Verify(s) {
+	if r.Verify(s) != nil {
 		t.Fatal("Failed to verify transaction")
 	}
 
 	r.Apply(s)
 
-	if s.Hosts["New"].Balance <= 0 {
+	if s.Hosts["New"].Balance != 1 {
 		t.Fatal("New coin balance is to low")
 	}
 

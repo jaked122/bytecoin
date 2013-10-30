@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -53,6 +54,8 @@ func (y *ytcServer) newWallet(w http.ResponseWriter, r *http.Request) {
 	h.Verify(y.s)
 	h.Apply(y.s)
 
+	log.Print(y.s)
+
 	io.WriteString(w, string(h.Key))
 }
 
@@ -60,7 +63,12 @@ func (y *ytcServer) sendMoney(w http.ResponseWriter, r *http.Request) {
 	b, _ := ioutil.ReadAll(r.Body)
 
 	v := make(map[string]string)
-	_ = json.Unmarshal(b, v)
+	err := json.Unmarshal(b, &v)
+	if err != nil {
+		io.WriteString(w, err.Error())
+	}
+
+	log.Print(v)
 
 	source := v["Source"]
 	destination := v["Destination"]
@@ -72,9 +80,10 @@ func (y *ytcServer) sendMoney(w http.ResponseWriter, r *http.Request) {
 	t.Amount = YTCAmount(amount)
 	t.Signature = Signature("fu")
 
-	ok := t.Verify(y.s)
-	if !ok {
-		io.WriteString(w, "false")
+	err = t.Verify(y.s)
+	if err != nil {
+		log.Print(y.s)
+		io.WriteString(w, err.Error())
 		return
 	}
 	t.Apply(y.s)
