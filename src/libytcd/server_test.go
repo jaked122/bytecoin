@@ -28,13 +28,13 @@ func TestSimple(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100000)
 
 	if len(y1.neighbors) != 1 {
 		t.Fatal("y1 didn't connect")
 	}
 
-	time.Sleep(1)
+	time.Sleep(10000)
 
 	if len(y2.neighbors) != 1 {
 		t.Log(y1)
@@ -43,10 +43,10 @@ func TestSimple(t *testing.T) {
 	}
 
 	y2.Send(&HostUpdate{"HostUpdate", "foo", "foo"})
-	time.Sleep(1 * time.Second)
+	time.Sleep(100000)
 	y2.Send(&TransferUpdate{"TransferUpdate", "hard", "foo", 1, "sig"})
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100000)
 
 	if y1.s.Hosts["foo"].Balance != 1 {
 		t.Log(y1.s.Hosts)
