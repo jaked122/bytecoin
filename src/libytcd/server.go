@@ -1,8 +1,8 @@
 package libytcd
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -24,6 +24,7 @@ type ytcServer struct {
 	s         *State
 	d         *http.ServeMux
 	neighbors []*json.Encoder
+	priv      map[HostHash]*ecdsa.PrivateKey
 }
 
 func NewYtcd() (y *ytcServer) {
@@ -34,6 +35,8 @@ func NewYtcd() (y *ytcServer) {
 	y.d.HandleFunc(root, y.loadHomepage)
 	y.d.HandleFunc(newWallet, y.newWallet)
 	y.d.HandleFunc(sendMoney, y.sendMoney)
+
+	y.priv = make(map[HostHash]*ecdsa.PrivateKey)
 
 	return
 }
@@ -49,13 +52,16 @@ func (y *ytcServer) newWallet(w http.ResponseWriter, r *http.Request) {
 	rand.Read(b)
 
 	h := NewHostUpdate()
-	h.Key = HostKey(hex.EncodeToString(b))
-	h.Signature = "Unimplemented"
+	priv, pub := RandomKey()
+	h.Key = pub
+	h.Sign(priv)
 
 	h.Verify(y.s)
 	h.Apply(y.s)
 
-	io.WriteString(w, string(h.Key))
+	y.priv[pub.Hash()] = priv
+
+	io.WriteString(w, string(h.Key.Hash()))
 
 	y.Send(h)
 }
@@ -83,10 +89,10 @@ func (y *ytcServer) sendMoney(w http.ResponseWriter, r *http.Request) {
 	amount, _ := strconv.ParseUint(v["Amount"], 10, 64)
 
 	t := NewTransferUpdate()
-	t.Source = HostKey(source)
-	t.Destination = HostKey(destination)
+	t.Source = HostHash(source)
+	t.Destination = HostHash(destination)
 	t.Amount = YTCAmount(amount)
-	t.Signature = Signature("fu")
+	t.Sign(y.priv[HostHash(source)])
 
 	err = t.Verify(y.s)
 	if err != nil {

@@ -1,7 +1,10 @@
 package libytcd
 
 import (
+	"crypto/ecdsa"
+	"crypto/rand"
 	"errors"
+	"log"
 )
 
 type Update interface {
@@ -11,8 +14,8 @@ type Update interface {
 
 type TransferUpdate struct {
 	Type        string
-	Source      HostKey
-	Destination HostKey
+	Source      HostHash
+	Destination HostHash
 	Amount      YTCAmount
 	Signature   Signature
 	//Public Key? Check bitcoin
@@ -38,6 +41,16 @@ func (t *TransferUpdate) Verify(s *State) (err error) {
 	return
 }
 
+func (t *TransferUpdate) Sign(key *ecdsa.PrivateKey) {
+	h := []byte(t.String())
+	s, r, err := ecdsa.Sign(rand.Reader, key, h)
+	if err != nil {
+		log.Fatal(err)
+	}
+	t.Signature = Signature{s, r}
+	return
+}
+
 func (t *TransferUpdate) Apply(s *State) {
 	source := s.Hosts[t.Source]
 	source.Balance -= t.Amount
@@ -45,6 +58,15 @@ func (t *TransferUpdate) Apply(s *State) {
 	dest := s.Hosts[t.Destination]
 	dest.Balance += t.Amount
 	s.Hosts[t.Destination] = dest
+	return
+}
+
+func (t *TransferUpdate) String() (str string) {
+	str = "TransferUpdate\n"
+	str += "Source:" + string(t.Source) + "\n"
+	str += "Destination:" + string(t.Destination) + "\n"
+	str += "Amount:" + string(t.Amount) + "\n"
+	log.Print(str)
 	return
 }
 
@@ -66,9 +88,19 @@ func NewHostUpdate() (h *HostUpdate) {
 	return
 }
 
+func (t *HostUpdate) Sign(key *ecdsa.PrivateKey) {
+	h := []byte(t.String())
+	s, r, err := ecdsa.Sign(rand.Reader, key, h)
+	if err != nil {
+		log.Fatal(err)
+	}
+	t.Signature = Signature{s, r}
+	return
+}
+
 func (t *HostUpdate) Verify(s *State) (err error) {
 	// Verify signature from old key
-	o, found := s.Hosts[t.Key]
+	o, found := s.Hosts[t.Key.Hash()]
 	if found && o.Key != t.Key {
 		return errors.New("Host collision")
 	}
@@ -77,9 +109,15 @@ func (t *HostUpdate) Verify(s *State) (err error) {
 	return
 }
 
+func (t *HostUpdate) String() (str string) {
+	str = "Hostupdate\n"
+	str += "Key:" + t.Key.String() + "\n"
+	return
+}
+
 func (t *HostUpdate) Apply(s *State) {
-	host := s.Hosts[t.Key]
+	host := s.Hosts[t.Key.Hash()]
 	host.Key = t.Key
-	s.Hosts[t.Key] = host
+	s.Hosts[t.Key.Hash()] = host
 	return
 }

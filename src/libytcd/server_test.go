@@ -42,9 +42,19 @@ func TestSimple(t *testing.T) {
 		t.Fatal("y2 didn't connect")
 	}
 
-	y2.Send(&HostUpdate{"HostUpdate", "foo", "foo"})
+	h := NewHostUpdate()
+	priv, npub := DeterministicKey(1)
+	h.Key = npub
+	h.Sign(priv)
+	y2.Send(h)
 	time.Sleep(100000)
-	y2.Send(&TransferUpdate{"TransferUpdate", "hard", "foo", 1, "sig"})
+	r := NewTransferUpdate()
+	priv, pub := OriginKey()
+	r.Source = pub.Hash()
+	r.Destination = npub.Hash()
+	r.Amount = 1
+	r.Sign(priv)
+	y2.Send(r)
 
 	time.Sleep(100000)
 
