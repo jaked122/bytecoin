@@ -7,7 +7,7 @@ import (
 
 func main() {
 	y := libytcd.NewYtcd()
-	err := y.Listen(":800")
+	err := y.ListenCtl(":800")
 	if err != nil {
 		log.Fatal(err)
 	}
