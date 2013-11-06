@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	cryptorand "crypto/rand"
 	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -22,13 +23,13 @@ type Signature struct {
 }
 
 func (h HostKey) String() (str string) {
-	str = fmt.Sprint(h)
+	str = fmt.Sprint(h.PublicKey)
 	return
 }
 
 func (h HostKey) Hash() (str HostHash) {
 	hash := sha512.New()
-	str = HostHash(string(hash.Sum([]byte(h.String()))))
+	str = HostHash(hex.EncodeToString(hash.Sum([]byte(h.String()))))
 	return
 }
 
