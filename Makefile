@@ -9,12 +9,13 @@ bin/ytcClient: src/ytcClient/*.go src/libytcd/*.go
 	GOPATH=$(CURDIR) go install ytcClient
 
 test: all
-	GOPATH=$(CURDIR) go test ytcd libytcd ytcClient
+	GOPATH=$(CURDIR) go test libGFC
 
 fmt:
 	go fmt src/ytcd/*.go
 	go fmt src/libytcd/*.go
 	go fmt src/ytcClient/*.go
+	go fmt src/libGFC/*.go
 
 clean:
 	rm -f bin/ytcd
