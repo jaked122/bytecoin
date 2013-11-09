@@ -23,7 +23,14 @@ func TestParse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if *v.(*TransferUpdate) != *r {
+	vs := v.(*TransferUpdate)
+	if *vs != *r {
+		t.Log(vs.Source == r.Source)
+		t.Log(vs.Destination == r.Destination)
+		t.Log(vs.Amount == r.Amount)
+		t.Log(vs.Signature == r.Signature)
+		t.Log(vs.Signature)
+		t.Log(r.Signature)
 		t.Fatal(v, "!=", r)
 	}
 
