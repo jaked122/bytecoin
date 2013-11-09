@@ -7,10 +7,11 @@ import (
 
 func TestParse(t *testing.T) {
 	r := NewTransferUpdate()
-	r.Source = "Source"
-	r.Destination = "Destination"
+	priv, pub := OriginKey()
+	r.Source = pub.Hash()
+	r.Destination = pub.Hash()
 	r.Amount = 1
-	r.Signature = "Signature"
+	r.Sign(priv)
 
 	b, err := json.Marshal(r)
 	if err != nil {
@@ -22,13 +23,20 @@ func TestParse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if *v.(*TransferUpdate) != *r {
+	vs := v.(*TransferUpdate)
+	if *vs != *r {
+		t.Log(vs.Source == r.Source)
+		t.Log(vs.Destination == r.Destination)
+		t.Log(vs.Amount == r.Amount)
+		t.Log(vs.Signature == r.Signature)
+		t.Log(vs.Signature)
+		t.Log(r.Signature)
 		t.Fatal(v, "!=", r)
 	}
 
 	h := NewHostUpdate()
-	h.Key = "Key"
-	h.Signature = "Signature"
+	h.Key = pub
+	h.Sign(priv)
 
 	b, err = json.Marshal(h)
 	if err != nil {

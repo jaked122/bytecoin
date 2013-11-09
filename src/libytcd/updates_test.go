@@ -7,9 +7,12 @@ import (
 func SimpleTest(t *testing.T) {
 	s := NewState()
 
+	priv, pub := OriginKey()
+	npriv, npub := DeterministicKey(1)
+
 	h := NewHostUpdate()
-	h.Key = "New"
-	h.Signature = "Signature"
+	h.Key = npub
+	h.Sign(npriv)
 
 	if h.Verify(s) != nil {
 		t.Fatal("Failed to verify HostUpdate")
@@ -18,9 +21,10 @@ func SimpleTest(t *testing.T) {
 	h.Apply(s)
 
 	r := NewTransferUpdate()
-	r.Source = "hard"
-	r.Destination = "New"
+	r.Source = pub.Hash()
+	r.Destination = npub.Hash()
 	r.Amount = 1
+	r.Sign(priv)
 
 	if r.Verify(s) != nil {
 		t.Fatal("Failed to verify transaction")
@@ -28,7 +32,7 @@ func SimpleTest(t *testing.T) {
 
 	r.Apply(s)
 
-	if s.Hosts["New"].Balance != 1 {
+	if s.Hosts[npub.Hash()].Balance != 1 {
 		t.Fatal("New coin balance is to low")
 	}
 
