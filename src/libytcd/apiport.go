@@ -1,6 +1,7 @@
 package libytcd
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/json"
 	"io"
@@ -19,7 +20,10 @@ const (
 )
 
 type ApiPort struct {
-	d *http.ServeMux
+	d           *http.ServeMux
+	keys        map[string]*ecdsa.PrivateKey
+	transaction chan MessageError
+	block       chan BlockError
 }
 
 func NewApiPort() (y *ApiPort) {
@@ -31,6 +35,14 @@ func NewApiPort() (y *ApiPort) {
 	y.d.HandleFunc(apisendMoney, y.sendMoney)
 
 	return
+}
+
+func (a *ApiPort) AddTransactionChannel(transaction chan MessageError) {
+	a.transaction = transaction
+}
+
+func (a *ApiPort) AddBlockChannel(block chan BlockError) {
+	a.block = block
 }
 
 // Will eventually load html explaining how to get started?

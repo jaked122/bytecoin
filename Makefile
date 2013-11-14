@@ -10,6 +10,8 @@ bin/ytcClient: src/ytcClient/*.go src/libytcd/*.go
 
 test: all
 	GOPATH=$(CURDIR) go test libGFC
+	GOPATH=$(CURDIR) go test libytc
+	GOPATH=$(CURDIR) go test libytcd
 
 fmt:
 	go fmt src/ytcd/*.go

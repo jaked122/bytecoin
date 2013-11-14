@@ -4,7 +4,17 @@ import (
 	"libGFC"
 )
 
+type MessageError struct {
+	BlockMessage libGFC.BlockMessage
+	error        chan bool
+}
+
+type BlockError struct {
+	BlockMessage libGFC.BlockMessage
+	error        chan bool
+}
+
 type Port interface {
-	addTransactionChannel(transaction chan BlockMessage)
-	addBlockChannel(block chan []BlockMessage)
+	AddTransactionChannel(transaction chan MessageError)
+	AddBlockChannel(block chan BlockError)
 }
