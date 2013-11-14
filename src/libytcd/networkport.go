@@ -10,14 +10,14 @@ type NetworkPort struct {
 	neighbors []*json.Encoder
 }
 
-func NewNetworkPort() (y *NetworkPort) {
-	y = new(NetworkPort)
+func NewNetworkPort() (n *NetworkPort) {
+	n = new(NetworkPort)
 	return
 }
 
-func (y *NetworkPort) HandleNetworkConnection(c net.Conn) {
+func (n *NetworkPort) HandleNetworkConnection(c net.Conn) {
 	je := json.NewEncoder(c)
-	y.neighbors = append(y.neighbors, je)
+	n.neighbors = append(n.neighbors, je)
 
 	j := json.NewDecoder(c)
 	for {
@@ -26,7 +26,7 @@ func (y *NetworkPort) HandleNetworkConnection(c net.Conn) {
 	}
 }
 
-func (y *NetworkPort) ListenNetwork(addr string) (err error) {
+func (n *NetworkPort) ListenNetwork(addr string) (err error) {
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
@@ -38,16 +38,16 @@ func (y *NetworkPort) ListenNetwork(addr string) (err error) {
 			return err
 		}
 
-		go y.HandleNetworkConnection(c)
+		go n.HandleNetworkConnection(c)
 	}
 }
 
-func (y *NetworkPort) ConnectAddress(addr string) (err error) {
+func (n *NetworkPort) ConnectAddress(addr string) (err error) {
 	c, err := net.Dial("tcp", addr)
 	if err != nil {
 		return
 	}
 
-	go y.HandleNetworkConnection(c)
+	go n.HandleNetworkConnection(c)
 	return
 }

@@ -26,13 +26,13 @@ type ApiPort struct {
 	block       chan BlockError
 }
 
-func NewApiPort() (y *ApiPort) {
-	y = new(ApiPort)
+func NewApiPort() (a *ApiPort) {
+	a = new(ApiPort)
 
-	y.d = http.NewServeMux()
-	y.d.HandleFunc(apiroot, y.loadHomepage)
-	y.d.HandleFunc(apinewWallet, y.newWallet)
-	y.d.HandleFunc(apisendMoney, y.sendMoney)
+	a.d = http.NewServeMux()
+	a.d.HandleFunc(apiroot, a.loadHomepage)
+	a.d.HandleFunc(apinewWallet, a.newWallet)
+	a.d.HandleFunc(apisendMoney, a.sendMoney)
 
 	return
 }
@@ -46,11 +46,11 @@ func (a *ApiPort) AddBlockChannel(block chan BlockError) {
 }
 
 // Will eventually load html explaining how to get started?
-func (y *ApiPort) loadHomepage(w http.ResponseWriter, r *http.Request) {
+func (a *ApiPort) loadHomepage(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "hello, world")
 }
 
-func (y *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
+func (a *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 
 	b := make([]byte, 8)
 	rand.Read(b)
@@ -60,7 +60,7 @@ func (y *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 	h.Sign(priv)
 }
 
-func (y *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
+func (a *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
 	b, _ := ioutil.ReadAll(r.Body)
 
 	v := make(map[string]string)
@@ -80,10 +80,10 @@ func (y *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (y *ApiPort) Listen(addr string) (err error) {
+func (a *ApiPort) Listen(addr string) (err error) {
 	s := &http.Server{
 		Addr:           addr,
-		Handler:        y.d,
+		Handler:        a.d,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
