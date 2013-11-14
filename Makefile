@@ -13,9 +13,10 @@ test: all
 
 fmt:
 	go fmt src/ytcd/*.go
-	go fmt src/libytcd/*.go
 	go fmt src/ytcClient/*.go
+	go fmt src/libytcd/*.go
 	go fmt src/libGFC/*.go
+	go fmt src/libytc/*.go
 
 clean:
 	rm -f bin/ytcd

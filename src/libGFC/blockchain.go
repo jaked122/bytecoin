@@ -2,8 +2,7 @@ package libGFC
 
 import (
 	"crypto/ecdsa"
-	"crypto/rand"
-	"libytcd"
+	"libytc"
 )
 
 type FileChainRecord struct {
@@ -13,14 +12,14 @@ type FileChainRecord struct {
 	FreeSpace   uint64 ///bytes
 	TakenSpace  uint64
 	RentedSpace uint64
-	keyList     []libytcd.HostKey
+	keyList     []libytc.HostKey
 }
 
 func NewHost(location string) (private *ecdsa.PrivateKey, host *FileChainRecord) {
 	host = new(FileChainRecord)
 	host.Id = RandomIdString()
 	host.Location = location
-	private, public := libytcd.NewKey(rand.Reader)
+	private, public := libytc.RandomKey()
 	host.keyList = append(host.keyList, public)
 	return
 }

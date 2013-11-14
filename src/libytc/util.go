@@ -1,4 +1,4 @@
-package libytcd
+package libytc
 
 import (
 	"io"
@@ -10,8 +10,11 @@ type dummy struct {
 }
 
 func (d *dummy) Read(p []byte) (n int, err error) {
-	n = 1
-	p[0] = byte(d.Rand.Uint32())
+	u := d.Rand.Uint32()
+	for n = 0; n < len(p) && n < 4; n++ {
+		p[n] = byte(u >> (8 * uint(n)))
+	}
+
 	return
 }
 

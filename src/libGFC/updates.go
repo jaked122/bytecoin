@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"libytcd"
+	"libytc"
 	"log"
 )
 
@@ -18,7 +18,7 @@ type TransferUpdate struct {
 	Source      string
 	Destination string
 	Amount      uint64
-	Signature   libytcd.Signature
+	Signature   libytc.Signature
 	//Public Key? Check bitcoin
 }
 
@@ -48,7 +48,7 @@ func (t *TransferUpdate) Sign(key *ecdsa.PrivateKey) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	t.Signature = libytcd.Signature{s, r}
+	t.Signature = libytc.Signature{s, r}
 	return
 }
 
@@ -81,7 +81,7 @@ func NewTransferUpdate(source string, destination string, amount uint64) (t *Tra
 
 type HostUpdate struct {
 	Record    *FileChainRecord
-	Signature libytcd.Signature
+	Signature libytc.Signature
 }
 
 func NewHostUpdate(f *FileChainRecord) (h *HostUpdate) {
@@ -96,7 +96,7 @@ func (t *HostUpdate) Sign(key *ecdsa.PrivateKey) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	t.Signature = libytcd.Signature{s, r}
+	t.Signature = libytc.Signature{s, r}
 	return
 }
 

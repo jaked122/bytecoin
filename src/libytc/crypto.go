@@ -1,4 +1,4 @@
-package libytcd
+package libytc
 
 import (
 	"crypto/ecdsa"
@@ -27,9 +27,9 @@ func (h HostKey) String() (str string) {
 	return
 }
 
-func (h HostKey) Hash() (str HostHash) {
+func (h HostKey) Hash() (str string) {
 	hash := sha512.New()
-	str = HostHash(hex.EncodeToString(hash.Sum([]byte(h.String()))))
+	str = hex.EncodeToString(hash.Sum([]byte(h.String())))
 	return
 }
 
