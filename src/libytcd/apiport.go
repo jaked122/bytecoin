@@ -21,13 +21,15 @@ const (
 
 type ApiPort struct {
 	d           *http.ServeMux
-	keys        map[string]*ecdsa.PrivateKey
-	transaction chan MessageError
+	key         map[string]*ecdsa.PrivateKey
+	transaction chan TransactionError
 	block       chan BlockError
 }
 
 func NewApiPort() (a *ApiPort) {
 	a = new(ApiPort)
+
+	a.key = make(map[string]*ecdsa.PrivateKey)
 
 	a.d = http.NewServeMux()
 	a.d.HandleFunc(apiroot, a.loadHomepage)
@@ -37,7 +39,7 @@ func NewApiPort() (a *ApiPort) {
 	return
 }
 
-func (a *ApiPort) AddTransactionChannel(transaction chan MessageError) {
+func (a *ApiPort) AddTransactionChannel(transaction chan TransactionError) {
 	a.transaction = transaction
 }
 
@@ -58,6 +60,19 @@ func (a *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 	priv, host := libGFC.NewHost("foo")
 	h := libGFC.NewHostUpdate(host)
 	h.Sign(priv)
+
+	a.key[host.Id] = priv
+
+	c := make(chan error)
+
+	a.transaction <- TransactionError{h, c}
+
+	err := <-c
+	if err == nil {
+		io.WriteString(w, host.Id)
+	} else {
+		io.WriteString(w, err.Error())
+	}
 }
 
 func (a *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +88,18 @@ func (a *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
 	destination := v["Destination"]
 	amount, _ := strconv.ParseUint(v["Amount"], 10, 64)
 
-	_ = libGFC.NewTransferUpdate(source, destination, amount)
+	t := libGFC.NewTransferUpdate(source, destination, amount)
+
+	c := make(chan error)
+
+	a.transaction <- TransactionError{t, c}
+
+	err = <-c
+	if err == nil {
+		io.WriteString(w, "true")
+	} else {
+		io.WriteString(w, err.Error())
+	}
 
 	io.WriteString(w, "true")
 

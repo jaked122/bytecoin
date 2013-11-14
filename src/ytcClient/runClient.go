@@ -14,7 +14,10 @@ func main() {
 	command := flag.Arg(0)
 	switch command {
 	case "address":
-		resp, _ := http.Get("http://localhost:800/newWallet")
+		resp, err := http.Get("http://localhost:800/newWallet")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 		b, _ := ioutil.ReadAll(resp.Body)
 		fmt.Println(string(b))
 	case "transfer":
