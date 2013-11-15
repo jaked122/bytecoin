@@ -47,6 +47,14 @@ func (a *ApiPort) AddBlockChannel(block chan BlockError) {
 	a.block = block
 }
 
+func (a *ApiPort) AddTransaction(transaction libGFC.Update) {
+
+}
+
+func (a *ApiPort) AddBlock(block []libGFC.Update) {
+
+}
+
 // Will eventually load html explaining how to get started?
 func (a *ApiPort) loadHomepage(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "hello, world")
@@ -65,7 +73,7 @@ func (a *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 
 	c := make(chan error)
 
-	a.transaction <- TransactionError{h, c}
+	a.transaction <- TransactionError{h, a, c}
 
 	err := <-c
 	if err == nil {
@@ -92,7 +100,7 @@ func (a *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
 
 	c := make(chan error)
 
-	a.transaction <- TransactionError{t, c}
+	a.transaction <- TransactionError{t, a, c}
 
 	err = <-c
 	if err == nil {
