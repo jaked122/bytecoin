@@ -109,8 +109,6 @@ func (a *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, err.Error())
 	}
 
-	io.WriteString(w, "true")
-
 	return
 }
 
