@@ -38,6 +38,7 @@ func (s *Server) handleChannels() {
 			if err != nil {
 				c.error <- err
 			} else {
+				c.error <- nil
 				for _, p := range s.ports {
 					if p != c.Source {
 						p.AddTransaction(update)
@@ -45,14 +46,15 @@ func (s *Server) handleChannels() {
 				}
 			}
 		case block := <-s.blocks:
+			var err error = nil
 			for _, v := range block.BlockMessage {
-				err := v.Verify(s.state)
+				err = v.Verify(s.state)
 				if err != nil {
-					block.error <- err
 					break
 				}
 				v.Apply(s.state)
 			}
+			block.error <- err
 
 			for _, p := range s.ports {
 				if p != block.Source {
