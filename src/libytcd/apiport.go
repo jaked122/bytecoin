@@ -79,6 +79,7 @@ func (a *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		io.WriteString(w, host.Id)
 	} else {
+		w.WriteHeader(400)
 		io.WriteString(w, err.Error())
 	}
 }

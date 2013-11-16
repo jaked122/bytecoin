@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"libytcd"
 	"net/http"
 )
 
@@ -14,12 +15,8 @@ func main() {
 	command := flag.Arg(0)
 	switch command {
 	case "address":
-		resp, err := http.Get("http://localhost:800/newWallet")
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-		b, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println(string(b))
+		addr := libytcd.GetAddress()
+		fmt.Println(addr)
 	case "transfer":
 		v := make(map[string]string)
 		v["Source"] = flag.Arg(1)
