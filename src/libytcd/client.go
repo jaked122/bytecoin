@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func GetAddress() string {
-	resp, err := http.Get("http://localhost:800/newWallet")
+func GetAddress(addr string) string {
+	resp, err := http.Get("http://" + addr + "/newWallet")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -15,7 +15,7 @@ func main() {
 	command := flag.Arg(0)
 	switch command {
 	case "address":
-		addr := libytcd.GetAddress()
+		addr := libytcd.GetAddress("localhost:800")
 		fmt.Println(addr)
 	case "transfer":
 		v := make(map[string]string)
