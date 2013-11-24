@@ -56,10 +56,14 @@ func (n *NetworkConnection) HandleNetworkConnection() {
 		switch v.Type {
 		case "Transaction":
 			t := libGFC.DecodeUpdate(v.Payload)
-			n.transaction <- TransactionError{t, n, nil}
+			c := make(chan error)
+			n.transaction <- TransactionError{t, n, c}
+			_ = <-c
 		case "Block":
 			b := libGFC.DecodeUpdates(v.Payload)
-			n.block <- BlockError{b, n, nil}
+			c := make(chan error)
+			n.block <- BlockError{b, n, c}
+			_ = <-c
 		}
 	}
 }
