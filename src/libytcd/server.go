@@ -13,7 +13,6 @@ type Server struct {
 
 func NewServer(ports []Port) (s *Server) {
 	s = new(Server)
-	s.ports = ports
 	s.state = libGFC.NewGFCChain()
 
 	s.blocks = make(chan BlockError)
@@ -22,11 +21,16 @@ func NewServer(ports []Port) (s *Server) {
 	go s.handleChannels()
 
 	for _, p := range ports {
-		p.AddTransactionChannel(s.transaction)
-		p.AddBlockChannel(s.blocks)
+		s.AddPort(p)
 	}
 
 	return
+}
+
+func (s *Server) AddPort(port Port) {
+	s.ports = append(s.ports, port)
+	port.AddTransactionChannel(s.transaction)
+	port.AddBlockChannel(s.blocks)
 }
 
 func (s *Server) handleChannels() {

@@ -11,10 +11,10 @@ type BlockMessage struct {
 }
 
 type Block struct {
-	Blocks []BlockMessage
+	Blocks [][]byte
 }
 
-func (b *Block) UpdateName(u Update) (out string) {
+func UpdateName(u Update) (out string) {
 	switch u.(type) {
 	case *TransferUpdate:
 		out = "TransferUpdate"
@@ -27,7 +27,7 @@ func (b *Block) UpdateName(u Update) (out string) {
 	return
 }
 
-func (b *Block) MakeType(Type string) (u Update) {
+func MakeType(Type string) (u Update) {
 	switch Type {
 	case "TransferUpdate":
 		u = new(TransferUpdate)
@@ -39,16 +39,39 @@ func (b *Block) MakeType(Type string) (u Update) {
 	return
 }
 
+func EncodeUpdate(up Update) (out []byte) {
+	var err error
+	b := new(BlockMessage)
+	b.Type = UpdateName(up)
+	b.Message, err = json.Marshal(up)
+	if err != nil {
+		log.Fatal(err)
+	}
+	out, err = json.Marshal(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func DecodeUpdate(in []byte) (up Update) {
+	b := new(BlockMessage)
+	err := json.Unmarshal(in, b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	up = MakeType(b.Type)
+	err = json.Unmarshal(b.Message, up)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
 func EncodeUpdates(up []Update) (out []byte) {
 	b := new(Block)
 	for _, v := range up {
-		name := b.UpdateName(v)
-		bytes, err := json.Marshal(v)
-		if err != nil {
-			log.Fatal(err)
-		}
-		message := BlockMessage{name, bytes}
-		b.Blocks = append(b.Blocks, message)
+		b.Blocks = append(b.Blocks, EncodeUpdate(v))
 	}
 
 	out, err := json.Marshal(b)
@@ -66,12 +89,7 @@ func DecodeUpdates(in []byte) (up []Update) {
 	}
 
 	for _, mess := range b.Blocks {
-		v := b.MakeType(mess.Type)
-		err := json.Unmarshal(mess.Message, v)
-		if err != nil {
-			log.Fatal(err)
-		}
-
+		v := DecodeUpdate(mess)
 		up = append(up, v)
 	}
 	return

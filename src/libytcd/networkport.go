@@ -6,24 +6,72 @@ import (
 	"net"
 )
 
-type NetworkPort struct {
-	neighbors []*json.Encoder
+type MessageFormat struct {
+	Type    string
+	Payload []byte
 }
 
-func NewNetworkPort() (n *NetworkPort) {
-	n = new(NetworkPort)
+type NetworkConnection struct {
+	outbound    *json.Encoder
+	inbound     *json.Decoder
+	block       chan BlockError
+	transaction chan TransactionError
+}
+
+func NewNetworkConnection(c net.Conn) (n *NetworkConnection) {
+	n = new(NetworkConnection)
+	n.outbound = json.NewEncoder(c)
+	n.inbound = json.NewDecoder(c)
+
+	go n.HandleNetworkConnection()
 	return
 }
 
-func (n *NetworkPort) HandleNetworkConnection(c net.Conn) {
-	je := json.NewEncoder(c)
-	n.neighbors = append(n.neighbors, je)
+func (n *NetworkConnection) AddTransactionChannel(transaction chan TransactionError) {
+	n.transaction = transaction
+}
 
-	j := json.NewDecoder(c)
+func (n *NetworkConnection) AddBlockChannel(block chan BlockError) {
+	n.block = block
+}
+
+func (n *NetworkConnection) AddBlock(block []libGFC.Update) {
+	msg := new(MessageFormat)
+	msg.Type = "Block"
+	msg.Payload = libGFC.EncodeUpdates(block)
+	n.outbound.Encode(msg)
+}
+
+func (n *NetworkConnection) AddTransaction(transaction libGFC.Update) {
+	msg := new(MessageFormat)
+	msg.Type = "Transaction"
+	msg.Payload = libGFC.EncodeUpdate(transaction)
+	n.outbound.Encode(msg)
+}
+
+func (n *NetworkConnection) HandleNetworkConnection() {
 	for {
-		v := make([]libGFC.BlockMessage, 1)
-		j.Decode(&v)
+		v := new(MessageFormat)
+		n.inbound.Decode(v)
+		switch v.Type {
+		case "Transaction":
+			t := libGFC.DecodeUpdate(v.Payload)
+			n.transaction <- TransactionError{t, n, nil}
+		case "Block":
+			b := libGFC.DecodeUpdates(v.Payload)
+			n.block <- BlockError{b, n, nil}
+		}
 	}
+}
+
+type NetworkPort struct {
+	s *Server
+}
+
+func NewNetworkPort(s *Server) (n *NetworkPort) {
+	n = new(NetworkPort)
+	n.s = s
+	return
 }
 
 func (n *NetworkPort) ListenNetwork(addr string) (err error) {
@@ -37,8 +85,7 @@ func (n *NetworkPort) ListenNetwork(addr string) (err error) {
 		if err != nil {
 			return err
 		}
-
-		go n.HandleNetworkConnection(c)
+		_ = NewNetworkConnection(c)
 	}
 }
 
@@ -48,6 +95,6 @@ func (n *NetworkPort) ConnectAddress(addr string) (err error) {
 		return
 	}
 
-	go n.HandleNetworkConnection(c)
+	_ = NewNetworkConnection(c)
 	return
 }
