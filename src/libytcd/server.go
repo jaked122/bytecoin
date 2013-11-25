@@ -9,6 +9,7 @@ type Server struct {
 	transaction chan TransactionError
 	blocks      chan BlockError
 	state       *libGFC.GFCChain
+	event       chan bool
 }
 
 func NewServer(ports []Port) (s *Server) {
@@ -31,6 +32,9 @@ func (s *Server) AddPort(port Port) {
 	s.ports = append(s.ports, port)
 	port.AddTransactionChannel(s.transaction)
 	port.AddBlockChannel(s.blocks)
+	if s.event != nil {
+		s.event <- true
+	}
 }
 
 func (s *Server) handleChannels() {

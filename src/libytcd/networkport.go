@@ -3,6 +3,7 @@ package libytcd
 import (
 	"encoding/json"
 	"libGFC"
+	"log"
 	"net"
 )
 
@@ -86,10 +87,11 @@ func (n *NetworkPort) ListenNetwork(addr string) (err error) {
 
 	for {
 		c, err := l.Accept()
+		log.Print("Listened")
 		if err != nil {
 			return err
 		}
-		_ = NewNetworkConnection(c)
+		n.s.AddPort(NewNetworkConnection(c))
 	}
 }
 
@@ -99,6 +101,6 @@ func (n *NetworkPort) ConnectAddress(addr string) (err error) {
 		return
 	}
 
-	_ = NewNetworkConnection(c)
+	n.s.AddPort(NewNetworkConnection(c))
 	return
 }
