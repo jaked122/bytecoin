@@ -1,7 +1,6 @@
 package libytcd
 
 import (
-	"log"
 	"testing"
 )
 
@@ -18,7 +17,7 @@ func TestNetworkPortSimple(t *testing.T) {
 		c <- true
 		err := a.ListenNetwork("127.0.0.1:1777")
 		if err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 	}()
 
