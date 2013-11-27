@@ -74,6 +74,7 @@ func (s *Server) handleChannels() {
 					}
 				}
 			}
+
 		case block := <-s.BlockChannel:
 			if s.event != nil {
 				s.event <- true
@@ -86,6 +87,7 @@ func (s *Server) handleChannels() {
 				}
 				v.Apply(s.state)
 			}
+
 			block.error <- err
 
 			for _, p := range s.ports {
@@ -93,11 +95,16 @@ func (s *Server) handleChannels() {
 					p.AddBlock(block.BlockMessage)
 				}
 			}
+
+			s.SeenTransactions = make(map[string]libGFC.Update)
+
 		case key := <-s.KeyChannel:
 			s.Keys[key.Id] = key.Key
 			key.error <- nil
+
 		case _ = <-s.calculateBlock:
 			if _, found := s.Keys[s.state.NextHost().Id]; found {
+
 				block := make([]libGFC.Update, len(s.SeenTransactions))
 				i := uint(0)
 				for _, v := range s.SeenTransactions {
