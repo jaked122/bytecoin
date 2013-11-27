@@ -31,10 +31,6 @@ func NewFile(filesize uint64) (file *FileChainRecord) {
 	return
 }
 
-type GFCChain struct {
-	State map[string]*FileChainRecord
-}
-
 func OriginHostRecord() (private *ecdsa.PrivateKey, host *FileChainRecord) {
 	host = new(FileChainRecord)
 	host.Id = "Origin"
@@ -45,12 +41,30 @@ func OriginHostRecord() (private *ecdsa.PrivateKey, host *FileChainRecord) {
 	return
 }
 
+type GFCChain struct {
+	State    map[string]*FileChainRecord
+	Revision uint64
+}
+
 func NewGFCChain() (g *GFCChain) {
 	g = new(GFCChain)
 	g.State = make(map[string]*FileChainRecord)
+	g.Revision = 0
 
 	_, s := OriginHostRecord()
 	update := NewHostUpdate(s)
 	update.Apply(g)
 	return
+}
+
+func (g *GFCChain) NextHost() *FileChainRecord {
+	i := uint64(0)
+	for {
+		for _, host := range g.State {
+			if i >= g.Revision {
+				return host
+			}
+			i++
+		}
+	}
 }

@@ -30,3 +30,10 @@ func TestNewFile(t *testing.T) {
 		t.Fatal("ID not created")
 	}
 }
+
+func TestNextHost(t *testing.T) {
+	chain := NewGFCChain()
+	if chain.NextHost().Location != "127.0.0.1" {
+		t.Fatal("NextHost location is %s", chain.NextHost().Location)
+	}
+}
