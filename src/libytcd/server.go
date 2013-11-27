@@ -29,8 +29,8 @@ func NewServer(ports []Port) (s *Server) {
 	s.calculateBlock = time.Tick(1 * time.Minute)
 
 	s.Keys = make(map[string]*ecdsa.PrivateKey)
-	key, _ := libGFC.OriginHostRecord()
-	s.Keys["127.0.0.1"] = key
+	key, host := libGFC.OriginHostRecord()
+	s.Keys[host.Id] = key
 
 	go s.handleChannels()
 
@@ -53,9 +53,6 @@ func (s *Server) handleChannels() {
 	for {
 		select {
 		case c := <-s.TransactionChannel:
-			if s.event != nil {
-				s.event <- true
-			}
 			update := c.BlockMessage
 			_, found := s.SeenTransactions[update.String()]
 			if found {
@@ -76,9 +73,6 @@ func (s *Server) handleChannels() {
 			}
 
 		case block := <-s.BlockChannel:
-			if s.event != nil {
-				s.event <- true
-			}
 			var err error = nil
 			for _, v := range block.BlockMessage {
 				err = v.Verify(s.state)
@@ -96,6 +90,7 @@ func (s *Server) handleChannels() {
 				}
 			}
 
+			s.state.Revision += 1
 			s.SeenTransactions = make(map[string]libGFC.Update)
 
 		case key := <-s.KeyChannel:
@@ -113,9 +108,15 @@ func (s *Server) handleChannels() {
 				}
 
 				c := make(chan error)
-				s.BlockChannel <- BlockError{block, nil, c}
-				<-c
+				go func() {
+					s.BlockChannel <- BlockError{block, nil, c}
+					<-c
+				}()
 			}
+		}
+
+		if s.event != nil {
+			s.event <- true
 		}
 	}
 }
