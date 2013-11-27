@@ -12,6 +12,7 @@ import (
 type Update interface {
 	Verify(s *GFCChain) (err error)
 	Apply(s *GFCChain)
+	String() string
 }
 
 type TransferUpdate struct {

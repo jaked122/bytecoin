@@ -5,11 +5,12 @@ import (
 )
 
 type Server struct {
-	ports       []Port
-	transaction chan TransactionError
-	blocks      chan BlockError
-	state       *libGFC.GFCChain
-	event       chan bool
+	ports            []Port
+	transaction      chan TransactionError
+	blocks           chan BlockError
+	state            *libGFC.GFCChain
+	event            chan bool
+	SeenTransactions map[string]bool
 }
 
 func NewServer(ports []Port) (s *Server) {
@@ -18,6 +19,7 @@ func NewServer(ports []Port) (s *Server) {
 
 	s.blocks = make(chan BlockError)
 	s.transaction = make(chan TransactionError)
+	s.SeenTransactions = make(map[string]bool)
 
 	go s.handleChannels()
 
@@ -42,10 +44,16 @@ func (s *Server) handleChannels() {
 		select {
 		case c := <-s.transaction:
 			update := c.BlockMessage
+			_, found := s.SeenTransactions[update.String()]
+			if found {
+				c.error <- nil
+				continue
+			}
 			err := update.Verify(s.state)
 			if err != nil {
 				c.error <- err
 			} else {
+				s.SeenTransactions[update.String()] = true
 				c.error <- nil
 				for _, p := range s.ports {
 					if p != c.Source {

@@ -35,7 +35,22 @@ type GFCChain struct {
 	State map[string]*FileChainRecord
 }
 
+func OriginHostRecord() (private *ecdsa.PrivateKey, host *FileChainRecord) {
+	host = new(FileChainRecord)
+	host.Id = "Origin"
+	host.Location = "127.0.0.1"
+	host.Balance = 1e8
+	private, public := libytc.DeterministicKey(0)
+	host.keyList = append(host.keyList, public)
+	return
+}
+
 func NewGFCChain() (g *GFCChain) {
 	g = new(GFCChain)
+	g.State = make(map[string]*FileChainRecord)
+
+	_, s := OriginHostRecord()
+	update := NewHostUpdate(s)
+	update.Apply(g)
 	return
 }
