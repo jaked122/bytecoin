@@ -43,6 +43,9 @@ func (s *Server) handleChannels() {
 	for {
 		select {
 		case c := <-s.transaction:
+			if s.event != nil {
+				s.event <- true
+			}
 			update := c.BlockMessage
 			_, found := s.SeenTransactions[update.String()]
 			if found {
@@ -62,6 +65,9 @@ func (s *Server) handleChannels() {
 				}
 			}
 		case block := <-s.blocks:
+			if s.event != nil {
+				s.event <- true
+			}
 			var err error = nil
 			for _, v := range block.BlockMessage {
 				err = v.Verify(s.state)

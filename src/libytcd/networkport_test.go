@@ -34,7 +34,7 @@ func TestNetworkPortSimple(t *testing.T) {
 
 	t.Log("Connected")
 
-	_ = <-a.s.event
+	<-a.s.event
 
 	t.Log("Recieved event")
 
@@ -43,20 +43,31 @@ func TestNetworkPortSimple(t *testing.T) {
 		t.Fatal("Failure to connect")
 	}
 
+	b.s.event = a.s.event
+	a.s.event = nil
+
 	priv, _ := libytc.DeterministicKey(0)
 	_, h := libGFC.NewHost("destination")
 	record := libGFC.NewHostUpdate(h)
 
 	a.s.transaction <- TransactionError{record, nil, c}
-	<-c
+	err = <-c
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-b.s.event
 
-	u := libGFC.NewTransferUpdate("Origin", "destination", 1)
+	u := libGFC.NewTransferUpdate("Origin", "Origin", 1)
 	u.Sign(priv)
+
 	a.s.transaction <- TransactionError{u, nil, c}
+	err = <-c
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-b.s.event
 
-	<-c
-
-	if len(b.s.SeenTransactions) != 1 {
+	if len(b.s.SeenTransactions) != 2 {
 		t.Fatal("Length is not one, length is %d", len(b.s.SeenTransactions))
 	}
 
