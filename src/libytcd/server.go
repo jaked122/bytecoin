@@ -1,25 +1,36 @@
 package libytcd
 
 import (
+	"crypto/ecdsa"
 	"libGFC"
+	"time"
 )
 
 type Server struct {
-	ports            []Port
-	transaction      chan TransactionError
-	blocks           chan BlockError
-	state            *libGFC.GFCChain
-	event            chan bool
-	SeenTransactions map[string]bool
+	ports              []Port
+	state              *libGFC.GFCChain
+	TransactionChannel chan TransactionError
+	BlockChannel       chan BlockError
+	KeyChannel         chan KeyError
+	event              chan bool
+	calculateBlock     <-chan time.Time
+	SeenTransactions   map[string]libGFC.Update
+	Keys               map[string]*ecdsa.PrivateKey
 }
 
 func NewServer(ports []Port) (s *Server) {
 	s = new(Server)
 	s.state = libGFC.NewGFCChain()
 
-	s.blocks = make(chan BlockError)
-	s.transaction = make(chan TransactionError)
-	s.SeenTransactions = make(map[string]bool)
+	s.BlockChannel = make(chan BlockError)
+	s.TransactionChannel = make(chan TransactionError)
+	s.KeyChannel = make(chan KeyError)
+	s.SeenTransactions = make(map[string]libGFC.Update)
+	s.calculateBlock = time.Tick(1 * time.Minute)
+
+	s.Keys = make(map[string]*ecdsa.PrivateKey)
+	key, _ := libGFC.OriginHostRecord()
+	s.Keys["127.0.0.1"] = key
 
 	go s.handleChannels()
 
@@ -32,8 +43,7 @@ func NewServer(ports []Port) (s *Server) {
 
 func (s *Server) AddPort(port Port) {
 	s.ports = append(s.ports, port)
-	port.AddTransactionChannel(s.transaction)
-	port.AddBlockChannel(s.blocks)
+	port.AddServer(s)
 	if s.event != nil {
 		s.event <- true
 	}
@@ -42,7 +52,7 @@ func (s *Server) AddPort(port Port) {
 func (s *Server) handleChannels() {
 	for {
 		select {
-		case c := <-s.transaction:
+		case c := <-s.TransactionChannel:
 			if s.event != nil {
 				s.event <- true
 			}
@@ -56,7 +66,7 @@ func (s *Server) handleChannels() {
 			if err != nil {
 				c.error <- err
 			} else {
-				s.SeenTransactions[update.String()] = true
+				s.SeenTransactions[update.String()] = update
 				c.error <- nil
 				for _, p := range s.ports {
 					if p != c.Source {
@@ -64,7 +74,7 @@ func (s *Server) handleChannels() {
 					}
 				}
 			}
-		case block := <-s.blocks:
+		case block := <-s.BlockChannel:
 			if s.event != nil {
 				s.event <- true
 			}
@@ -82,6 +92,22 @@ func (s *Server) handleChannels() {
 				if p != block.Source {
 					p.AddBlock(block.BlockMessage)
 				}
+			}
+		case key := <-s.KeyChannel:
+			s.Keys[key.Id] = key.Key
+			key.error <- nil
+		case _ = <-s.calculateBlock:
+			if _, found := s.Keys[s.state.NextHost().Id]; found {
+				block := make([]libGFC.Update, len(s.SeenTransactions))
+				i := uint(0)
+				for _, v := range s.SeenTransactions {
+					block[i] = v
+					i++
+				}
+
+				c := make(chan error)
+				s.BlockChannel <- BlockError{block, nil, c}
+				<-c
 			}
 		}
 	}

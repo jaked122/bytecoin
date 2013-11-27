@@ -50,7 +50,7 @@ func TestNetworkPortSimple(t *testing.T) {
 	_, h := libGFC.NewHost("destination")
 	record := libGFC.NewHostUpdate(h)
 
-	a.s.transaction <- TransactionError{record, nil, c}
+	a.s.TransactionChannel <- TransactionError{record, nil, c}
 	err = <-c
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +60,7 @@ func TestNetworkPortSimple(t *testing.T) {
 	u := libGFC.NewTransferUpdate("Origin", "Origin", 1)
 	u.Sign(priv)
 
-	a.s.transaction <- TransactionError{u, nil, c}
+	a.s.TransactionChannel <- TransactionError{u, nil, c}
 	err = <-c
 	if err != nil {
 		t.Fatal(err)

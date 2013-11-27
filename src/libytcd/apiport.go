@@ -1,7 +1,6 @@
 package libytcd
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/json"
 	"io"
@@ -20,16 +19,12 @@ const (
 )
 
 type ApiPort struct {
-	d           *http.ServeMux
-	key         map[string]*ecdsa.PrivateKey
-	transaction chan TransactionError
-	block       chan BlockError
+	d *http.ServeMux
+	s *Server
 }
 
 func NewApiPort() (a *ApiPort) {
 	a = new(ApiPort)
-
-	a.key = make(map[string]*ecdsa.PrivateKey)
 
 	a.d = http.NewServeMux()
 	a.d.HandleFunc(apiroot, a.loadHomepage)
@@ -39,12 +34,8 @@ func NewApiPort() (a *ApiPort) {
 	return
 }
 
-func (a *ApiPort) AddTransactionChannel(transaction chan TransactionError) {
-	a.transaction = transaction
-}
-
-func (a *ApiPort) AddBlockChannel(block chan BlockError) {
-	a.block = block
+func (a *ApiPort) AddServer(s *Server) {
+	a.s = s
 }
 
 func (a *ApiPort) AddTransaction(transaction libGFC.Update) {
@@ -69,13 +60,19 @@ func (a *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 	h := libGFC.NewHostUpdate(host)
 	h.Sign(priv)
 
-	a.key[host.Id] = priv
-
 	c := make(chan error)
 
-	a.transaction <- TransactionError{h, a, c}
-
+	a.s.KeyChannel <- KeyError{host.Id, priv, c}
 	err := <-c
+	if err != nil {
+		w.WriteHeader(500)
+		io.WriteString(w, err.Error())
+		return
+	}
+
+	a.s.TransactionChannel <- TransactionError{h, a, c}
+
+	err = <-c
 	if err == nil {
 		io.WriteString(w, host.Id)
 	} else {
@@ -101,7 +98,7 @@ func (a *ApiPort) sendMoney(w http.ResponseWriter, r *http.Request) {
 
 	c := make(chan error)
 
-	a.transaction <- TransactionError{t, a, c}
+	a.s.TransactionChannel <- TransactionError{t, a, c}
 
 	err = <-c
 	if err == nil {

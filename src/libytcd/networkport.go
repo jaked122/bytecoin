@@ -13,10 +13,9 @@ type MessageFormat struct {
 }
 
 type NetworkConnection struct {
-	outbound    *json.Encoder
-	inbound     *json.Decoder
-	block       chan BlockError
-	transaction chan TransactionError
+	outbound *json.Encoder
+	inbound  *json.Decoder
+	s        *Server
 }
 
 func NewNetworkConnection(c net.Conn) (n *NetworkConnection) {
@@ -28,12 +27,8 @@ func NewNetworkConnection(c net.Conn) (n *NetworkConnection) {
 	return
 }
 
-func (n *NetworkConnection) AddTransactionChannel(transaction chan TransactionError) {
-	n.transaction = transaction
-}
-
-func (n *NetworkConnection) AddBlockChannel(block chan BlockError) {
-	n.block = block
+func (n *NetworkConnection) AddServer(s *Server) {
+	n.s = s
 }
 
 func (n *NetworkConnection) AddBlock(block []libGFC.Update) {
@@ -58,12 +53,12 @@ func (n *NetworkConnection) HandleNetworkConnection() {
 		case "Transaction":
 			t := libGFC.DecodeUpdate(v.Payload)
 			c := make(chan error)
-			n.transaction <- TransactionError{t, n, c}
+			n.s.TransactionChannel <- TransactionError{t, n, c}
 			_ = <-c
 		case "Block":
 			b := libGFC.DecodeUpdates(v.Payload)
 			c := make(chan error)
-			n.block <- BlockError{b, n, c}
+			n.s.BlockChannel <- BlockError{b, n, c}
 			_ = <-c
 		}
 	}

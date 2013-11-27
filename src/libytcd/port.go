@@ -1,6 +1,7 @@
 package libytcd
 
 import (
+	"crypto/ecdsa"
 	"libGFC"
 )
 
@@ -16,9 +17,14 @@ type BlockError struct {
 	error        chan error
 }
 
+type KeyError struct {
+	Id    string
+	Key   *ecdsa.PrivateKey
+	error chan error
+}
+
 type Port interface {
-	AddTransactionChannel(transaction chan TransactionError)
-	AddBlockChannel(block chan BlockError)
+	AddServer(s *Server)
 	AddTransaction(transaction libGFC.Update)
 	AddBlock(block []libGFC.Update)
 }
