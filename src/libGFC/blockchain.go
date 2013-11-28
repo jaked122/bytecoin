@@ -3,6 +3,7 @@ package libGFC
 import (
 	"crypto/ecdsa"
 	"libytc"
+	"sort"
 )
 
 type FileChainRecord struct {
@@ -59,12 +60,37 @@ func NewGFCChain() (g *GFCChain) {
 
 func (g *GFCChain) NextHost() *FileChainRecord {
 	i := uint64(0)
+	hosts := make([]*FileChainRecord, len(g.State))
+	for _, host := range g.State {
+		hosts[i] = host
+		i++
+	}
+
+	sort.Sort(Hosts(hosts))
+
+	i = 0
 	for {
-		for _, host := range g.State {
+		for _, host := range hosts {
 			if i >= g.Revision {
 				return host
 			}
 			i++
 		}
 	}
+}
+
+type Hosts []*FileChainRecord
+
+func (s Hosts) Len() int {
+	return len(s)
+}
+
+func (s Hosts) Less(i, j int) bool {
+	return s[i].Id < s[j].Id
+}
+
+func (s Hosts) Swap(i, j int) {
+	t := s[i]
+	s[i] = s[j]
+	s[j] = t
 }
