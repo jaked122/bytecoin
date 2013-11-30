@@ -40,4 +40,19 @@ func TestBlockGeneration(t *testing.T) {
 	if s.state.Revision != 1 {
 		t.Fatal("Wrong revision number")
 	}
+
+	_, o := libGFC.OriginHostRecord()
+
+	if s.state.State[o.Id].Balance != 0 {
+		t.Fatal("Incorrect balance")
+	}
+
+	e <- time.Now()
+	<-s.event
+	<-s.event
+
+	if s.state.Revision != 2 {
+		t.Fatal("Wrong revision number")
+	}
+
 }

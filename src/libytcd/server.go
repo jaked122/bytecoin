@@ -3,6 +3,7 @@ package libytcd
 import (
 	"crypto/ecdsa"
 	"libGFC"
+	"net"
 	"time"
 )
 
@@ -98,14 +99,10 @@ func (s *Server) handleChannels() {
 			key.error <- nil
 
 		case _ = <-s.calculateBlock:
+
 			if _, found := s.Keys[s.state.NextHost().Id]; found {
 
-				block := make([]libGFC.Update, len(s.SeenTransactions))
-				i := uint(0)
-				for _, v := range s.SeenTransactions {
-					block[i] = v
-					i++
-				}
+				block := s.produceBlock()
 
 				c := make(chan error)
 				go func() {
@@ -119,4 +116,61 @@ func (s *Server) handleChannels() {
 			s.event <- true
 		}
 	}
+}
+
+func (s *Server) GetLocation() (location string) {
+	addrs, _ := net.InterfaceAddrs()
+	for _, a := range addrs {
+		ip, _, _ := net.ParseCIDR(a.String())
+		if ip.IsLoopback() {
+			continue
+		}
+		//Ignore IPv6 for now
+		if ip.To4() == nil {
+			continue
+		}
+		location = ip.String()
+	}
+	return
+}
+
+func (s *Server) produceBlock() (block []libGFC.Update) {
+
+	//Find our entry
+	var location *libGFC.FileChainRecord = nil
+	for _, l := range s.state.State {
+		if l.Location == s.GetLocation() {
+			location = l
+			break
+		}
+	}
+
+	//If we aren't in the map, add us
+	if location == nil {
+		key, r := libGFC.NewHost(s.GetLocation())
+		t := libGFC.NewHostUpdate(r)
+		t.Sign(key)
+		location = r
+		s.Keys[r.Id] = key
+		s.SeenTransactions[t.String()] = t
+	}
+
+	//If we are bootstrapping, destroy the default entry
+	if s.state.Revision == 0 {
+		key, r := libGFC.OriginHostRecord()
+		t := libGFC.NewTransferUpdate(r.Id, location.Id, r.Balance)
+		t.Sign(key)
+		s.SeenTransactions[t.String()] = t
+	}
+
+	block = make([]libGFC.Update, len(s.SeenTransactions))
+
+	i := uint(0)
+	for _, v := range s.SeenTransactions {
+		block[i] = v
+		i++
+	}
+
+	return
+
 }

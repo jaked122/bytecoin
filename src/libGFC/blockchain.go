@@ -71,6 +71,9 @@ func (g *GFCChain) NextHost() *FileChainRecord {
 	i = 0
 	for {
 		for _, host := range hosts {
+			if host.Balance == 0 {
+				continue
+			}
 			if i >= g.Revision {
 				return host
 			}
