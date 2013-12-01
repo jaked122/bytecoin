@@ -4,6 +4,7 @@ import (
 	"libGFC"
 	"libytc"
 	"testing"
+	"time"
 )
 
 func TestNetworkPortSimple(t *testing.T) {
@@ -27,7 +28,7 @@ func TestNetworkPortSimple(t *testing.T) {
 	<-c
 
 	t.Log("Connecting")
-	err := b.ConnectAddress("127.0.0.1:1777")
+	_, err := b.ConnectAddress("127.0.0.1:1777")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,4 +72,56 @@ func TestNetworkPortSimple(t *testing.T) {
 		t.Fatal("Length is not one, length is %d", len(b.s.SeenTransactions))
 	}
 
+}
+
+func TestRemoteUpdates(t *testing.T) {
+	//Create a server with a block
+
+	s := NewServer(nil)
+	s.event = make(chan bool)
+
+	e := make(chan time.Time)
+	s.calculateBlock = (<-chan time.Time)(e)
+
+	e <- time.Now()
+	<-s.event
+	<-s.event
+
+	if s.state.Revision != 1 {
+		t.Fatal("Wrong revision number")
+	}
+
+	p1 := NewNetworkPort(s)
+
+	c := make(chan error)
+	go func() {
+		c <- nil
+		err := p1.ListenNetwork("127.0.0.1:1338")
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+	<-c
+
+	s2 := NewServer(nil)
+	s2.event = make(chan bool)
+
+	p2 := NewNetworkPort(s2)
+	pc := make(chan *NetworkConnection)
+	go func() {
+		port, err := p2.ConnectAddress("127.0.0.1:1338")
+		if err != nil {
+			t.Fatal(err)
+		}
+		pc <- port
+	}()
+
+	<-s2.event
+	<-s.event
+	p2c := <-pc
+	p2c.Reconnect()
+
+	if s2.state.Revision != 1 {
+		t.Fatal(s2.state.Revision)
+	}
 }

@@ -16,12 +16,14 @@ type NetworkConnection struct {
 	outbound *json.Encoder
 	inbound  *json.Decoder
 	s        *Server
+	sync     chan bool
 }
 
 func NewNetworkConnection(c net.Conn) (n *NetworkConnection) {
 	n = new(NetworkConnection)
 	n.outbound = json.NewEncoder(c)
 	n.inbound = json.NewDecoder(c)
+	n.sync = make(chan bool)
 
 	go n.HandleNetworkConnection()
 	return
@@ -45,6 +47,14 @@ func (n *NetworkConnection) AddTransaction(transaction libGFC.Update) {
 	n.outbound.Encode(msg)
 }
 
+func (n *NetworkConnection) Reconnect() {
+	msg := new(MessageFormat)
+	msg.Type = "Reconnect"
+	msg.Payload, _ = json.Marshal(n.s.state.Revision)
+	n.outbound.Encode(msg)
+	<-n.sync
+}
+
 func (n *NetworkConnection) HandleNetworkConnection() {
 	for {
 		v := new(MessageFormat)
@@ -60,6 +70,24 @@ func (n *NetworkConnection) HandleNetworkConnection() {
 			c := make(chan error)
 			n.s.BlockChannel <- BlockError{b, n, c}
 			_ = <-c
+		case "Reconnect":
+			b := new(uint64)
+			json.Unmarshal(v.Payload, b)
+			if *b < n.s.state.Revision {
+				o := new(MessageFormat)
+				o.Type = "State"
+				o.Payload, _ = json.Marshal(n.s.state)
+				n.outbound.Encode(o)
+			}
+		case "State":
+			b := new(libGFC.GFCChain)
+			json.Unmarshal(v.Payload, b)
+			if b != nil && b.Revision > n.s.state.Revision {
+				n.s.state = b
+				n.sync <- true
+			} else {
+				log.Fatal(b)
+			}
 		}
 	}
 }
@@ -90,12 +118,13 @@ func (n *NetworkPort) ListenNetwork(addr string) (err error) {
 	}
 }
 
-func (n *NetworkPort) ConnectAddress(addr string) (err error) {
+func (n *NetworkPort) ConnectAddress(addr string) (port *NetworkConnection, err error) {
 	c, err := net.Dial("tcp", addr)
 	if err != nil {
 		return
 	}
 
-	n.s.AddPort(NewNetworkConnection(c))
+	port = NewNetworkConnection(c)
+	n.s.AddPort(port)
 	return
 }
