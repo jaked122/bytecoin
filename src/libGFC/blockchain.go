@@ -13,7 +13,7 @@ type FileChainRecord struct {
 	FreeSpace   uint64 ///bytes
 	TakenSpace  uint64
 	RentedSpace uint64
-	keyList     []libytc.HostKey
+	KeyList     []libytc.HostKey
 }
 
 func NewHost(location string) (private *ecdsa.PrivateKey, host *FileChainRecord) {
@@ -21,7 +21,7 @@ func NewHost(location string) (private *ecdsa.PrivateKey, host *FileChainRecord)
 	host.Id = RandomIdString()
 	host.Location = location
 	private, public := libytc.RandomKey()
-	host.keyList = append(host.keyList, public)
+	host.KeyList = append(host.KeyList, public)
 	return
 }
 
@@ -38,7 +38,7 @@ func OriginHostRecord() (private *ecdsa.PrivateKey, host *FileChainRecord) {
 	host.Location = "127.0.0.1"
 	host.Balance = 1e8
 	private, public := libytc.DeterministicKey(0)
-	host.keyList = append(host.keyList, public)
+	host.KeyList = append(host.KeyList, public)
 	return
 }
 

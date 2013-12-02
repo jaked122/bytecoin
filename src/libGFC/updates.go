@@ -25,7 +25,7 @@ type TransferUpdate struct {
 
 func (t *TransferUpdate) Verify(s *GFCChain) (err error) {
 
-	_, found := s.State[t.Source]
+	h, found := s.State[t.Source]
 	if !found {
 		return errors.New("No Such Source")
 	}
@@ -40,6 +40,10 @@ func (t *TransferUpdate) Verify(s *GFCChain) (err error) {
 	}
 
 	//Verify Signature
+	if !ecdsa.Verify(&h.KeyList[0].PublicKey, []byte(t.String()), t.Signature.R, t.Signature.S) {
+		return errors.New("Invalid Signature")
+	}
+
 	return
 }
 
@@ -103,10 +107,15 @@ func (t *HostUpdate) Sign(key *ecdsa.PrivateKey) {
 
 func (t *HostUpdate) Verify(s *GFCChain) (err error) {
 	// Verify signature from old key
-	_, found := s.State[t.Record.Id]
-	if found {
-		//verify Signature
+	h, found := s.State[t.Record.Id]
+	if !found {
+		return
 	}
+
+	if !ecdsa.Verify(&h.KeyList[0].PublicKey, []byte(t.String()), t.Signature.R, t.Signature.S) {
+		return errors.New("Invalid Signature")
+	}
+
 	return
 }
 

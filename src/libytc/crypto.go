@@ -6,6 +6,7 @@ import (
 	cryptorand "crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -30,6 +31,25 @@ func (h HostKey) String() (str string) {
 func (h HostKey) Hash() (str string) {
 	hash := sha512.New()
 	str = hex.EncodeToString(hash.Sum([]byte(h.String())))
+	return
+}
+
+func (h HostKey) MarshalText() (text []byte, err error) {
+	a := struct {
+		X, Y *big.Int
+	}{h.PublicKey.X, h.PublicKey.Y}
+	return json.Marshal(a)
+}
+
+func (h HostKey) UnmarshalText(text []byte) (err error) {
+	a := struct {
+		X, Y *big.Int
+	}{}
+	err = json.Unmarshal(text, &a)
+
+	h.PublicKey.X = a.X
+	h.PublicKey.Y = a.Y
+	h.Curve = elliptic.P521()
 	return
 }
 
