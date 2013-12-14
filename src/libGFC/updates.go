@@ -12,6 +12,7 @@ import (
 type Update interface {
 	Verify(s *GFCChain) (err error)
 	Apply(s *GFCChain)
+	Chain() string
 	String() string
 }
 
@@ -67,12 +68,15 @@ func (t *TransferUpdate) Apply(s *GFCChain) {
 	return
 }
 
+func (t *TransferUpdate) Chain() string {
+	return "GFC"
+}
+
 func (t *TransferUpdate) String() (str string) {
 	str = "TransferUpdate\n"
 	str += "Source:" + string(t.Source) + "\n"
 	str += "Destination:" + string(t.Destination) + "\n"
 	str += "Amount:" + string(t.Amount) + "\n"
-	log.Print(str)
 	return
 }
 
@@ -119,13 +123,54 @@ func (t *HostUpdate) Verify(s *GFCChain) (err error) {
 	return
 }
 
+func (t *HostUpdate) Apply(s *GFCChain) {
+	s.State[t.Record.Id] = t.Record
+	return
+}
+
+func (t *HostUpdate) Chain() string {
+	return "GFC"
+}
+
 func (t *HostUpdate) String() (str string) {
 	str = "Hostupdate\n"
 	str += "Record:" + fmt.Sprint(t.Record) + "\n"
 	return
 }
 
-func (t *HostUpdate) Apply(s *GFCChain) {
-	s.State[t.Record.Id] = t.Record
+type UnknownUpdate struct {
+	payload string
+	chain   string
+	Type    string
+}
+
+func NewUnknownUpdate(payload string, chain string, Type string) (t *UnknownUpdate) {
+	t = new(UnknownUpdate)
+	t.payload = payload
+	t.chain = chain
+	t.Type = Type
+	return
+}
+
+func (t *UnknownUpdate) Verify(s *GFCChain) (err error) {
+	log.Fatal("Cannot Verify Unknown Update")
+	return
+}
+
+func (t *UnknownUpdate) Apply(s *GFCChain) {
+	log.Fatal("Cannot Apply Unknown Update")
+	return
+}
+
+func (t *UnknownUpdate) Chain() string {
+	return t.chain
+}
+
+func (t *UnknownUpdate) String() string {
+	return fmt.Sprint(t)
+}
+
+func (t *UnknownUpdate) MarshallJSON(b []byte, err error) {
+	b = []byte(t.payload)
 	return
 }

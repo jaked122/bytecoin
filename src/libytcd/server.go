@@ -9,7 +9,8 @@ import (
 
 type Server struct {
 	ports              []Port
-	state              *libGFC.GFCChain
+	state              map[string]*libGFC.GFCChain
+	encoder            map[string]libGFC.Encoder
 	TransactionChannel chan TransactionError
 	BlockChannel       chan BlockError
 	KeyChannel         chan KeyError
@@ -21,7 +22,11 @@ type Server struct {
 
 func NewServer(ports []Port) (s *Server) {
 	s = new(Server)
-	s.state = libGFC.NewGFCChain()
+	s.state = make(map[string]*libGFC.GFCChain)
+	s.state["GFC"] = libGFC.NewGFCChain()
+
+	s.encoder = make(map[string]libGFC.Encoder)
+	s.encoder["GFC"] = libGFC.GFCEncoder{}
 
 	s.BlockChannel = make(chan BlockError)
 	s.TransactionChannel = make(chan TransactionError)
@@ -60,7 +65,7 @@ func (s *Server) handleChannels() {
 				c.error <- nil
 				continue
 			}
-			err := update.Verify(s.state)
+			err := update.Verify(s.state[update.Chain()])
 			if err != nil {
 				c.error <- err
 			} else {
@@ -75,12 +80,13 @@ func (s *Server) handleChannels() {
 
 		case block := <-s.BlockChannel:
 			var err error = nil
+			chain := "GFC"
 			for _, v := range block.BlockMessage {
-				err = v.Verify(s.state)
+				err = v.Verify(s.state[v.Chain()])
 				if err != nil {
 					break
 				}
-				v.Apply(s.state)
+				v.Apply(s.state[v.Chain()])
 			}
 
 			block.error <- err
@@ -91,7 +97,7 @@ func (s *Server) handleChannels() {
 				}
 			}
 
-			s.state.Revision += 1
+			s.state[chain].Revision += 1
 			s.SeenTransactions = make(map[string]libGFC.Update)
 
 		case key := <-s.KeyChannel:
@@ -100,7 +106,7 @@ func (s *Server) handleChannels() {
 
 		case _ = <-s.calculateBlock:
 
-			if _, found := s.Keys[s.state.NextHost().Id]; found {
+			if _, found := s.Keys[s.state["GFC"].NextHost().Id]; found {
 
 				block := s.produceBlock()
 
@@ -138,7 +144,7 @@ func (s *Server) produceBlock() (block []libGFC.Update) {
 
 	//Find our entry
 	var location *libGFC.FileChainRecord = nil
-	for _, l := range s.state.State {
+	for _, l := range s.state["GFC"].State {
 		if l.Location == s.GetLocation() {
 			location = l
 			break
@@ -156,7 +162,7 @@ func (s *Server) produceBlock() (block []libGFC.Update) {
 	}
 
 	//If we are bootstrapping, destroy the default entry
-	if s.state.Revision == 0 {
+	if s.state["GFC"].Revision == 0 {
 		key, r := libGFC.OriginHostRecord()
 		t := libGFC.NewTransferUpdate(r.Id, location.Id, r.Balance)
 		t.Sign(key)
@@ -173,4 +179,20 @@ func (s *Server) produceBlock() (block []libGFC.Update) {
 
 	return
 
+}
+
+func (s *Server) EncodeUpdate(transaction libGFC.Update) []byte {
+	return s.encoder[transaction.Chain()].EncodeUpdate(transaction)
+}
+
+func (s *Server) EncodeUpdates(transaction []libGFC.Update) []byte {
+	return s.encoder[transaction[0].Chain()].EncodeUpdates(transaction)
+}
+
+func (s *Server) DecodeUpdate(b []byte, chain string) libGFC.Update {
+	return s.encoder[chain].DecodeUpdate(b)
+}
+
+func (s *Server) DecodeUpdates(b []byte, chain string) []libGFC.Update {
+	return s.encoder[chain].DecodeUpdates(b)
 }

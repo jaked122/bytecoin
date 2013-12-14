@@ -23,9 +23,9 @@ func TestBlockGeneration(t *testing.T) {
 	<-c
 	<-s.event
 
-	if _, found := s.Keys[s.state.NextHost().Id]; !found {
-		t.Log(s.state.NextHost())
-		t.Log(s.state.NextHost().Id)
+	if _, found := s.Keys[s.state["GFC"].NextHost().Id]; !found {
+		t.Log(s.state["GFC"].NextHost())
+		t.Log(s.state["GFC"].NextHost().Id)
 		t.Fatal("Next host is not us?")
 	}
 
@@ -37,13 +37,13 @@ func TestBlockGeneration(t *testing.T) {
 		t.Fatal("transaction still in queue", s.SeenTransactions)
 	}
 
-	if s.state.Revision != 1 {
+	if s.state["GFC"].Revision != 1 {
 		t.Fatal("Wrong revision number")
 	}
 
 	_, o := libGFC.OriginHostRecord()
 
-	if s.state.State[o.Id].Balance != 0 {
+	if s.state["GFC"].State[o.Id].Balance != 0 {
 		t.Fatal("Incorrect balance")
 	}
 
@@ -51,7 +51,7 @@ func TestBlockGeneration(t *testing.T) {
 	<-s.event
 	<-s.event
 
-	if s.state.Revision != 2 {
+	if s.state["GFC"].Revision != 2 {
 		t.Fatal("Wrong revision number")
 	}
 

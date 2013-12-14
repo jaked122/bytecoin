@@ -87,7 +87,7 @@ func TestRemoteUpdates(t *testing.T) {
 	<-s.event
 	<-s.event
 
-	if s.state.Revision != 1 {
+	if s.state["GFC"].Revision != 1 {
 		t.Fatal("Wrong revision number")
 	}
 
@@ -119,9 +119,9 @@ func TestRemoteUpdates(t *testing.T) {
 	<-s2.event
 	<-s.event
 	p2c := <-pc
-	p2c.Reconnect()
+	p2c.Reconnect("GFC")
 
-	if s2.state.Revision != 1 {
-		t.Fatal(s2.state.Revision)
+	if s2.state["GFC"].Revision != 1 {
+		t.Fatal(s2.state["GFC"].Revision)
 	}
 }

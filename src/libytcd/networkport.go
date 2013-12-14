@@ -9,6 +9,7 @@ import (
 
 type MessageFormat struct {
 	Type    string
+	Chain   string
 	Payload []byte
 }
 
@@ -36,21 +37,24 @@ func (n *NetworkConnection) AddServer(s *Server) {
 func (n *NetworkConnection) AddBlock(block []libGFC.Update) {
 	msg := new(MessageFormat)
 	msg.Type = "Block"
-	msg.Payload = libGFC.EncodeUpdates(block)
+	msg.Payload = n.s.EncodeUpdates(block)
+	msg.Chain = block[0].Chain()
 	n.outbound.Encode(msg)
 }
 
 func (n *NetworkConnection) AddTransaction(transaction libGFC.Update) {
 	msg := new(MessageFormat)
 	msg.Type = "Transaction"
-	msg.Payload = libGFC.EncodeUpdate(transaction)
+	msg.Payload = n.s.EncodeUpdate(transaction)
+	msg.Chain = transaction.Chain()
 	n.outbound.Encode(msg)
 }
 
-func (n *NetworkConnection) Reconnect() {
+func (n *NetworkConnection) Reconnect(chain string) {
 	msg := new(MessageFormat)
 	msg.Type = "Reconnect"
-	msg.Payload, _ = json.Marshal(n.s.state.Revision)
+	msg.Payload, _ = json.Marshal(n.s.state[chain].Revision)
+	msg.Chain = chain
 	n.outbound.Encode(msg)
 	<-n.sync
 }
@@ -61,29 +65,29 @@ func (n *NetworkConnection) HandleNetworkConnection() {
 		n.inbound.Decode(v)
 		switch v.Type {
 		case "Transaction":
-			t := libGFC.DecodeUpdate(v.Payload)
+			t := n.s.DecodeUpdate(v.Payload, v.Chain)
 			c := make(chan error)
 			n.s.TransactionChannel <- TransactionError{t, n, c}
 			_ = <-c
 		case "Block":
-			b := libGFC.DecodeUpdates(v.Payload)
+			b := n.s.DecodeUpdates(v.Payload, v.Chain)
 			c := make(chan error)
 			n.s.BlockChannel <- BlockError{b, n, c}
 			_ = <-c
 		case "Reconnect":
 			b := new(uint64)
 			json.Unmarshal(v.Payload, b)
-			if *b < n.s.state.Revision {
+			if *b < n.s.state[v.Chain].Revision {
 				o := new(MessageFormat)
 				o.Type = "State"
-				o.Payload, _ = json.Marshal(n.s.state)
+				o.Payload, _ = json.Marshal(n.s.state[v.Chain])
 				n.outbound.Encode(o)
 			}
 		case "State":
 			b := new(libGFC.GFCChain)
 			json.Unmarshal(v.Payload, b)
-			if b != nil && b.Revision > n.s.state.Revision {
-				n.s.state = b
+			if b != nil && b.Revision > n.s.state["GFC"].Revision {
+				n.s.state["GFC"] = b
 				n.sync <- true
 			} else {
 				log.Fatal(b)
@@ -110,7 +114,6 @@ func (n *NetworkPort) ListenNetwork(addr string) (err error) {
 
 	for {
 		c, err := l.Accept()
-		log.Print("Listened")
 		if err != nil {
 			return err
 		}
