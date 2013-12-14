@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"libGFC"
+	"libytc"
 	"net/http"
 	"strconv"
 	"time"
@@ -38,11 +39,11 @@ func (a *ApiPort) AddServer(s *Server) {
 	a.s = s
 }
 
-func (a *ApiPort) AddTransaction(transaction libGFC.Update) {
+func (a *ApiPort) AddTransaction(transaction libytc.Update) {
 
 }
 
-func (a *ApiPort) AddBlock(block []libGFC.Update) {
+func (a *ApiPort) AddBlock(block libytc.Block) {
 
 }
 

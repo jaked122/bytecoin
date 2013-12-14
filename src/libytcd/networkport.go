@@ -3,6 +3,7 @@ package libytcd
 import (
 	"encoding/json"
 	"libGFC"
+	"libytc"
 	"log"
 	"net"
 )
@@ -34,15 +35,15 @@ func (n *NetworkConnection) AddServer(s *Server) {
 	n.s = s
 }
 
-func (n *NetworkConnection) AddBlock(block []libGFC.Update) {
+func (n *NetworkConnection) AddBlock(block libytc.Block) {
 	msg := new(MessageFormat)
 	msg.Type = "Block"
-	msg.Payload = n.s.EncodeUpdates(block)
-	msg.Chain = block[0].Chain()
+	msg.Payload = n.s.EncodeBlock(block)
+	msg.Chain = block.Chain()
 	n.outbound.Encode(msg)
 }
 
-func (n *NetworkConnection) AddTransaction(transaction libGFC.Update) {
+func (n *NetworkConnection) AddTransaction(transaction libytc.Update) {
 	msg := new(MessageFormat)
 	msg.Type = "Transaction"
 	msg.Payload = n.s.EncodeUpdate(transaction)
@@ -70,7 +71,7 @@ func (n *NetworkConnection) HandleNetworkConnection() {
 			n.s.TransactionChannel <- TransactionError{t, n, c}
 			_ = <-c
 		case "Block":
-			b := n.s.DecodeUpdates(v.Payload, v.Chain)
+			b := n.s.DecodeBlock(v.Payload, v.Chain)
 			c := make(chan error)
 			n.s.BlockChannel <- BlockError{b, n, c}
 			_ = <-c

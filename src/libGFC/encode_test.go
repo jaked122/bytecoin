@@ -1,6 +1,7 @@
 package libGFC
 
 import (
+	"libytc"
 	"testing"
 )
 
@@ -10,11 +11,11 @@ func TestEncoding(t *testing.T) {
 
 	update := NewHostUpdate(record)
 	update.Sign(priv)
-	v := make([]Update, 0)
+	v := make([]libytc.Update, 0)
 	v = append(v, update)
 
-	arr := g.EncodeUpdates(v)
-	v = g.DecodeUpdates(arr)
+	arr := g.EncodeBlock(NewGFCBlock(0, v))
+	v = g.DecodeBlock(arr).Updates()
 	if v[0].(*HostUpdate).Record.Location != "foo" {
 		t.Fatal("Location is not foo")
 	}

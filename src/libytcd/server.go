@@ -3,6 +3,7 @@ package libytcd
 import (
 	"crypto/ecdsa"
 	"libGFC"
+	"libytc"
 	"net"
 	"time"
 )
@@ -10,13 +11,13 @@ import (
 type Server struct {
 	ports              []Port
 	state              map[string]*libGFC.GFCChain
-	encoder            map[string]libGFC.Encoder
+	encoder            map[string]libytc.Encoder
 	TransactionChannel chan TransactionError
 	BlockChannel       chan BlockError
 	KeyChannel         chan KeyError
 	event              chan bool
 	calculateBlock     <-chan time.Time
-	SeenTransactions   map[string]libGFC.Update
+	SeenTransactions   map[string]libytc.Update
 	Keys               map[string]*ecdsa.PrivateKey
 }
 
@@ -25,13 +26,13 @@ func NewServer(ports []Port) (s *Server) {
 	s.state = make(map[string]*libGFC.GFCChain)
 	s.state["GFC"] = libGFC.NewGFCChain()
 
-	s.encoder = make(map[string]libGFC.Encoder)
+	s.encoder = make(map[string]libytc.Encoder)
 	s.encoder["GFC"] = libGFC.GFCEncoder{}
 
 	s.BlockChannel = make(chan BlockError)
 	s.TransactionChannel = make(chan TransactionError)
 	s.KeyChannel = make(chan KeyError)
-	s.SeenTransactions = make(map[string]libGFC.Update)
+	s.SeenTransactions = make(map[string]libytc.Update)
 	s.calculateBlock = time.Tick(1 * time.Minute)
 
 	s.Keys = make(map[string]*ecdsa.PrivateKey)
@@ -81,7 +82,7 @@ func (s *Server) handleChannels() {
 		case block := <-s.BlockChannel:
 			var err error = nil
 			chain := "GFC"
-			for _, v := range block.BlockMessage {
+			for _, v := range block.BlockMessage.Updates() {
 				err = v.Verify(s.state[v.Chain()])
 				if err != nil {
 					break
@@ -98,7 +99,7 @@ func (s *Server) handleChannels() {
 			}
 
 			s.state[chain].Revision += 1
-			s.SeenTransactions = make(map[string]libGFC.Update)
+			s.SeenTransactions = make(map[string]libytc.Update)
 
 		case key := <-s.KeyChannel:
 			s.Keys[key.Id] = key.Key
@@ -140,7 +141,7 @@ func (s *Server) GetLocation() (location string) {
 	return
 }
 
-func (s *Server) produceBlock() (block []libGFC.Update) {
+func (s *Server) produceBlock() (block libytc.Block) {
 
 	//Find our entry
 	var location *libGFC.FileChainRecord = nil
@@ -169,30 +170,31 @@ func (s *Server) produceBlock() (block []libGFC.Update) {
 		s.SeenTransactions[t.String()] = t
 	}
 
-	block = make([]libGFC.Update, len(s.SeenTransactions))
+	update := make([]libytc.Update, len(s.SeenTransactions))
 
 	i := uint(0)
 	for _, v := range s.SeenTransactions {
-		block[i] = v
+		update[i] = v
 		i++
 	}
 
+	block = libGFC.NewGFCBlock(s.state["GFC"].Revision+1, update)
 	return
 
 }
 
-func (s *Server) EncodeUpdate(transaction libGFC.Update) []byte {
+func (s *Server) EncodeUpdate(transaction libytc.Update) []byte {
 	return s.encoder[transaction.Chain()].EncodeUpdate(transaction)
 }
 
-func (s *Server) EncodeUpdates(transaction []libGFC.Update) []byte {
-	return s.encoder[transaction[0].Chain()].EncodeUpdates(transaction)
+func (s *Server) EncodeBlock(block libytc.Block) []byte {
+	return s.encoder[block.Chain()].EncodeBlock(block)
 }
 
-func (s *Server) DecodeUpdate(b []byte, chain string) libGFC.Update {
+func (s *Server) DecodeUpdate(b []byte, chain string) libytc.Update {
 	return s.encoder[chain].DecodeUpdate(b)
 }
 
-func (s *Server) DecodeUpdates(b []byte, chain string) []libGFC.Update {
-	return s.encoder[chain].DecodeUpdates(b)
+func (s *Server) DecodeBlock(b []byte, chain string) libytc.Block {
+	return s.encoder[chain].DecodeBlock(b)
 }

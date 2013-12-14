@@ -2,15 +2,9 @@ package libGFC
 
 import (
 	"encoding/json"
+	"libytc"
 	"log"
 )
-
-type Encoder interface {
-	EncodeUpdate(Update) []byte
-	EncodeUpdates([]Update) []byte
-	DecodeUpdate([]byte) Update
-	DecodeUpdates([]byte) []Update
-}
 
 type BlockMessage struct {
 	Type    string
@@ -18,11 +12,12 @@ type BlockMessage struct {
 	Chain   string
 }
 
-type Block struct {
-	Blocks [][]byte
+type EncodedGFCBlock struct {
+	Blocks   [][]byte
+	Revision uint64
 }
 
-func UpdateName(u Update) (out string) {
+func UpdateName(u libytc.Update) (out string) {
 	switch u.(type) {
 	case *TransferUpdate:
 		out = "TransferUpdate"
@@ -35,7 +30,7 @@ func UpdateName(u Update) (out string) {
 	return
 }
 
-func MakeType(Type string, Chain string) (u Update) {
+func MakeType(Type string, Chain string) (u libytc.Update) {
 	if Chain != "GFC" {
 		log.Fatal("Wrong chain %s", Chain)
 	}
@@ -52,7 +47,7 @@ func MakeType(Type string, Chain string) (u Update) {
 
 type GFCEncoder struct{}
 
-func (g GFCEncoder) EncodeUpdate(up Update) (out []byte) {
+func (g GFCEncoder) EncodeUpdate(up libytc.Update) (out []byte) {
 	var err error
 	b := new(BlockMessage)
 	b.Type = UpdateName(up)
@@ -68,7 +63,7 @@ func (g GFCEncoder) EncodeUpdate(up Update) (out []byte) {
 	return
 }
 
-func (g GFCEncoder) DecodeUpdate(in []byte) (up Update) {
+func (g GFCEncoder) DecodeUpdate(in []byte) (up libytc.Update) {
 	b := new(BlockMessage)
 	err := json.Unmarshal(in, b)
 	if err != nil {
@@ -82,9 +77,10 @@ func (g GFCEncoder) DecodeUpdate(in []byte) (up Update) {
 	return
 }
 
-func (g GFCEncoder) EncodeUpdates(up []Update) (out []byte) {
-	b := new(Block)
-	for _, v := range up {
+func (g GFCEncoder) EncodeBlock(block libytc.Block) (out []byte) {
+	b := new(EncodedGFCBlock)
+	b.Revision = block.Revision()
+	for _, v := range block.Updates() {
 		b.Blocks = append(b.Blocks, g.EncodeUpdate(v))
 	}
 
@@ -95,16 +91,21 @@ func (g GFCEncoder) EncodeUpdates(up []Update) (out []byte) {
 	return
 }
 
-func (g GFCEncoder) DecodeUpdates(in []byte) (up []Update) {
-	b := new(Block)
+func (g GFCEncoder) DecodeBlock(in []byte) (block libytc.Block) {
+	b := new(EncodedGFCBlock)
 	err := json.Unmarshal(in, b)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, mess := range b.Blocks {
+	up := make([]libytc.Update, len(b.Blocks))
+
+	for i, mess := range b.Blocks {
 		v := g.DecodeUpdate(mess)
-		up = append(up, v)
+		up[i] = v
 	}
+
+	block = NewGFCBlock(b.Revision, up)
+
 	return
 }

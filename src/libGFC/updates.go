@@ -9,13 +9,6 @@ import (
 	"log"
 )
 
-type Update interface {
-	Verify(s *GFCChain) (err error)
-	Apply(s *GFCChain)
-	Chain() string
-	String() string
-}
-
 type TransferUpdate struct {
 	Source      string
 	Destination string
@@ -24,7 +17,9 @@ type TransferUpdate struct {
 	//Public Key? Check bitcoin
 }
 
-func (t *TransferUpdate) Verify(s *GFCChain) (err error) {
+func (t *TransferUpdate) Verify(i interface{}) (err error) {
+
+	s := i.(*GFCChain)
 
 	h, found := s.State[t.Source]
 	if !found {
@@ -58,7 +53,8 @@ func (t *TransferUpdate) Sign(key *ecdsa.PrivateKey) {
 	return
 }
 
-func (t *TransferUpdate) Apply(s *GFCChain) {
+func (t *TransferUpdate) Apply(i interface{}) {
+	s := i.(*GFCChain)
 	source := s.State[t.Source]
 	source.Balance -= t.Amount
 	s.State[t.Source] = source
@@ -109,7 +105,8 @@ func (t *HostUpdate) Sign(key *ecdsa.PrivateKey) {
 	return
 }
 
-func (t *HostUpdate) Verify(s *GFCChain) (err error) {
+func (t *HostUpdate) Verify(i interface{}) (err error) {
+	s := i.(*GFCChain)
 	// Verify signature from old key
 	h, found := s.State[t.Record.Id]
 	if !found {
@@ -123,7 +120,8 @@ func (t *HostUpdate) Verify(s *GFCChain) (err error) {
 	return
 }
 
-func (t *HostUpdate) Apply(s *GFCChain) {
+func (t *HostUpdate) Apply(i interface{}) {
+	s := i.(*GFCChain)
 	s.State[t.Record.Id] = t.Record
 	return
 }
@@ -152,12 +150,12 @@ func NewUnknownUpdate(payload string, chain string, Type string) (t *UnknownUpda
 	return
 }
 
-func (t *UnknownUpdate) Verify(s *GFCChain) (err error) {
+func (t *UnknownUpdate) Verify(i interface{}) (err error) {
 	log.Fatal("Cannot Verify Unknown Update")
 	return
 }
 
-func (t *UnknownUpdate) Apply(s *GFCChain) {
+func (t *UnknownUpdate) Apply(i interface{}) {
 	log.Fatal("Cannot Apply Unknown Update")
 	return
 }
