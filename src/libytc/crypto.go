@@ -7,6 +7,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -21,6 +22,21 @@ type HostKey struct {
 type Signature struct {
 	R *big.Int
 	S *big.Int
+}
+
+func Sign(str string, priv *ecdsa.PrivateKey) Signature {
+	r, s, err := ecdsa.Sign(cryptorand.Reader, priv, []byte(str))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return Signature{r, s}
+}
+
+func Verify(str string, pub HostKey, s Signature) (err error) {
+	if !ecdsa.Verify(&pub.PublicKey, []byte(str), s.R, s.S) {
+		err = errors.New("Invalid Signature")
+	}
+	return
 }
 
 func (h HostKey) String() (str string) {

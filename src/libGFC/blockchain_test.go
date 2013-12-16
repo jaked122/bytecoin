@@ -15,7 +15,7 @@ func TestNewHost(t *testing.T) {
 		t.Fatal("priv is nil")
 	}
 
-	if host.Location != "foo" {
+	if host.Location[0] != "foo" {
 		t.Fatal("Location is not foo")
 	}
 }
@@ -33,7 +33,7 @@ func TestNewFile(t *testing.T) {
 
 func TestNextHost(t *testing.T) {
 	chain := NewGFCChain()
-	if chain.NextHost().Location != "127.0.0.1" {
+	if chain.NextHost().Location[0] != "127.0.0.1" {
 		t.Fatal("NextHost location is %s", chain.NextHost().Location)
 	}
 }

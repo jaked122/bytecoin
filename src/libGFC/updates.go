@@ -2,11 +2,9 @@ package libGFC
 
 import (
 	"crypto/ecdsa"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"libytc"
-	"log"
 )
 
 type TransferUpdate struct {
@@ -35,21 +33,11 @@ func (t *TransferUpdate) Verify(i interface{}) (err error) {
 		return errors.New("Not enough money in source account")
 	}
 
-	//Verify Signature
-	if !ecdsa.Verify(&h.KeyList[0].PublicKey, []byte(t.String()), t.Signature.R, t.Signature.S) {
-		return errors.New("Invalid Signature")
-	}
-
-	return
+	return libytc.Verify(t.String(), h.KeyList[0], t.Signature)
 }
 
 func (t *TransferUpdate) Sign(key *ecdsa.PrivateKey) {
-	h := []byte(t.String())
-	s, r, err := ecdsa.Sign(rand.Reader, key, h)
-	if err != nil {
-		log.Fatal(err)
-	}
-	t.Signature = libytc.Signature{s, r}
+	t.Signature = libytc.Sign(t.String(), key)
 	return
 }
 
@@ -84,6 +72,52 @@ func NewTransferUpdate(source string, destination string, amount uint64) (t *Tra
 	return
 }
 
+type LocationUpdate struct {
+	Id        string
+	Location  []string
+	Signature libytc.Signature
+}
+
+func NewLocationUpdate(Id string, Location []string) (l *LocationUpdate) {
+	l = new(LocationUpdate)
+	l.Id = Id
+	l.Location = Location
+	return
+}
+
+func (l *LocationUpdate) Verify(i interface{}) (err error) {
+	s := i.(*GFCChain)
+
+	h, found := s.State[l.Id]
+	if !found {
+		return errors.New("Id does not exist")
+	}
+
+	return libytc.Verify(l.String(), h.KeyList[0], l.Signature)
+}
+
+func (l *LocationUpdate) Apply(i interface{}) {
+	s := i.(*GFCChain)
+	s.State[l.Id].Location = l.Location
+	return
+}
+
+func (l *LocationUpdate) String() (s string) {
+	s = "LocationUpdate\n"
+	s += fmt.Sprint("Id: %s\n", l.Id)
+	s += fmt.Sprint("Location: %s\n", fmt.Sprint(l.Location))
+	return
+}
+
+func (l *LocationUpdate) Sign(key *ecdsa.PrivateKey) {
+	l.Signature = libytc.Sign(l.String(), key)
+	return
+}
+
+func (l *LocationUpdate) Chain() string {
+	return "GFC"
+}
+
 type HostUpdate struct {
 	Record    *FileChainRecord
 	Signature libytc.Signature
@@ -96,12 +130,7 @@ func NewHostUpdate(f *FileChainRecord) (h *HostUpdate) {
 }
 
 func (t *HostUpdate) Sign(key *ecdsa.PrivateKey) {
-	h := []byte(t.String())
-	s, r, err := ecdsa.Sign(rand.Reader, key, h)
-	if err != nil {
-		log.Fatal(err)
-	}
-	t.Signature = libytc.Signature{s, r}
+	t.Signature = libytc.Sign(t.String(), key)
 	return
 }
 
@@ -113,11 +142,7 @@ func (t *HostUpdate) Verify(i interface{}) (err error) {
 		return
 	}
 
-	if !ecdsa.Verify(&h.KeyList[0].PublicKey, []byte(t.String()), t.Signature.R, t.Signature.S) {
-		return errors.New("Invalid Signature")
-	}
-
-	return
+	return libytc.Verify(t.String(), h.KeyList[0], t.Signature)
 }
 
 func (t *HostUpdate) Apply(i interface{}) {

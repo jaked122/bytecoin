@@ -9,7 +9,7 @@ import (
 type FileChainRecord struct {
 	Id          string
 	Balance     uint64
-	Location    string
+	Location    []string
 	FreeSpace   uint64 ///bytes
 	TakenSpace  uint64
 	RentedSpace uint64
@@ -19,7 +19,7 @@ type FileChainRecord struct {
 func NewHost(location string) (private *ecdsa.PrivateKey, host *FileChainRecord) {
 	host = new(FileChainRecord)
 	host.Id = RandomIdString()
-	host.Location = location
+	host.Location = []string{location}
 	private, public := libytc.RandomKey()
 	host.KeyList = append(host.KeyList, public)
 	return
@@ -35,7 +35,7 @@ func NewFile(filesize uint64) (file *FileChainRecord) {
 func OriginHostRecord() (private *ecdsa.PrivateKey, host *FileChainRecord) {
 	host = new(FileChainRecord)
 	host.Id = "Origin"
-	host.Location = "127.0.0.1"
+	host.Location = []string{"127.0.0.1"}
 	host.Balance = 1e8
 	private, public := libytc.DeterministicKey(0)
 	host.KeyList = append(host.KeyList, public)

@@ -146,7 +146,7 @@ func (s *Server) produceBlock() (block libytc.Block) {
 	//Find our entry
 	var location *libGFC.FileChainRecord = nil
 	for _, l := range s.state["GFC"].State {
-		if l.Location == s.GetLocation() {
+		if l.Location[0] == s.GetLocation() {
 			location = l
 			break
 		}
