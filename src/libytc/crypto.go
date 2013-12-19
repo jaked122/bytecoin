@@ -16,7 +16,7 @@ import (
 )
 
 type HostKey struct {
-	ecdsa.PublicKey
+	PublicKey *ecdsa.PublicKey
 }
 
 type Signature struct {
@@ -32,64 +32,76 @@ func Sign(str string, priv *ecdsa.PrivateKey) Signature {
 	return Signature{r, s}
 }
 
-func Verify(str string, pub HostKey, s Signature) (err error) {
-	if !ecdsa.Verify(&pub.PublicKey, []byte(str), s.R, s.S) {
+func SignMap(m *SignatureMap, str string, priv *ecdsa.PrivateKey) *SignatureMap {
+	if m == nil {
+		m = NewSignatureMap(1)
+	}
+
+	(m.M)[&HostKey{&priv.PublicKey}] = Sign(str, priv)
+	return m
+}
+
+func Verify(str string, pub *HostKey, s Signature) (err error) {
+	if !ecdsa.Verify(pub.PublicKey, []byte(str), s.R, s.S) {
 		err = errors.New("Invalid Signature")
 	}
 	return
 }
 
-func (h HostKey) String() (str string) {
+func (h *HostKey) String() (str string) {
 	str = fmt.Sprint(h.PublicKey)
 	return
 }
 
-func (h HostKey) Hash() (str string) {
+func (h *HostKey) Hash() (str string) {
 	hash := sha512.New()
 	str = hex.EncodeToString(hash.Sum([]byte(h.String())))
 	return
 }
 
-func (h HostKey) MarshalText() (text []byte, err error) {
+func (h *HostKey) MarshalJSON() (text []byte, err error) {
 	a := struct {
 		X, Y *big.Int
 	}{h.PublicKey.X, h.PublicKey.Y}
 	return json.Marshal(a)
 }
 
-func (h HostKey) UnmarshalText(text []byte) (err error) {
-	a := struct {
+func (h *HostKey) UnmarshalJSON(text []byte) (err error) {
+	a := &struct {
 		X, Y *big.Int
 	}{}
-	err = json.Unmarshal(text, &a)
+	err = json.Unmarshal(text, a)
+	if err != nil {
+		return
+	}
 
-	h.PublicKey.X = a.X
-	h.PublicKey.Y = a.Y
-	h.Curve = elliptic.P521()
+	h.PublicKey = &ecdsa.PublicKey{elliptic.P521(), a.X, a.Y}
+
 	return
 }
 
-func OriginKey() (priv *ecdsa.PrivateKey, host HostKey) {
+func OriginKey() (priv *ecdsa.PrivateKey, host *HostKey) {
 	return DeterministicKey(3021)
 }
 
-func DeterministicKey(i int64) (priv *ecdsa.PrivateKey, host HostKey) {
+func DeterministicKey(i int64) (priv *ecdsa.PrivateKey, host *HostKey) {
 	source := MakeReader(mathrand.New(mathrand.NewSource(i)))
 	priv, host = NewKey(source)
 	return
 }
 
-func NewKey(source io.Reader) (priv *ecdsa.PrivateKey, host HostKey) {
+func NewKey(source io.Reader) (priv *ecdsa.PrivateKey, host *HostKey) {
 	priv, err := ecdsa.GenerateKey(elliptic.P521(), source)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	host.PublicKey = priv.PublicKey
+	host = new(HostKey)
+	host.PublicKey = &priv.PublicKey
 	return
 }
 
-func RandomKey() (priv *ecdsa.PrivateKey, host HostKey) {
+func RandomKey() (priv *ecdsa.PrivateKey, host *HostKey) {
 	source := cryptorand.Reader
 	priv, host = NewKey(source)
 	return

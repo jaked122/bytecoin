@@ -61,3 +61,27 @@ func SimpleTest(t *testing.T) {
 		t.Fatal("New coin balance is to low")
 	}
 }
+
+func TestTranferEncoding(t *testing.T) {
+
+	priv, record, s := barChain()
+
+	h := NewTransferUpdate(record.Id, record.Id, 0)
+	h.Sign(priv)
+
+	b := GFCEncoder{}.EncodeUpdate(h)
+	j := GFCEncoder{}.DecodeUpdate(b)
+	if len(j.(*TransferUpdate).Signature.M) != 1 {
+		t.Fatal(j.(*TransferUpdate).Signature.M)
+	}
+
+	if h.Verify(s) != nil {
+		t.Fatal(h.Verify(s))
+	}
+
+	t.Log(string(b))
+
+	if j.Verify(s) != nil {
+		t.Fatal(j.Verify(s))
+	}
+}

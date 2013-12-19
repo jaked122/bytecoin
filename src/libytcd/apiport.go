@@ -71,6 +71,7 @@ func (a *ApiPort) newWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	c = make(chan error)
 	a.s.TransactionChannel <- TransactionError{h, a, c}
 
 	err = <-c

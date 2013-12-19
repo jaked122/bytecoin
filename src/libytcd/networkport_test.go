@@ -13,7 +13,7 @@ func TestNetworkPortSimple(t *testing.T) {
 	b := NewNetworkPort(NewServer(nil))
 	t.Log("Done making")
 
-	a.s.event = make(chan bool)
+	a.s.event = make(chan string)
 
 	c := make(chan error)
 	go func() {
@@ -51,25 +51,33 @@ func TestNetworkPortSimple(t *testing.T) {
 	_, h := libGFC.NewHost("destination")
 	record := libGFC.NewHostUpdate(h)
 
+	c = make(chan error)
 	a.s.TransactionChannel <- TransactionError{record, nil, c}
 	err = <-c
 	if err != nil {
 		t.Fatal(err)
 	}
-	<-b.s.event
+	o := <-b.s.event
+	t.Log(o)
 
 	u := libGFC.NewTransferUpdate("Origin", "Origin", 1)
 	u.Sign(priv)
 
+	if len(u.Signature.M) != 1 {
+		t.Fatal("SignatureMap is not created")
+	}
+
+	c = make(chan error)
 	a.s.TransactionChannel <- TransactionError{u, nil, c}
 	err = <-c
 	if err != nil {
 		t.Fatal(err)
 	}
-	<-b.s.event
+	o = <-b.s.event
+	t.Log(o)
 
 	if len(b.s.SeenTransactions) != 2 {
-		t.Fatal("Length is not one, length is %d", len(b.s.SeenTransactions))
+		t.Fatal("Length is not 2, length is", len(b.s.SeenTransactions), b.s.SeenTransactions)
 	}
 
 }
@@ -78,7 +86,7 @@ func TestRemoteUpdates(t *testing.T) {
 	//Create a server with a block
 
 	s := NewServer(nil)
-	s.event = make(chan bool)
+	s.event = make(chan string)
 
 	e := make(chan time.Time)
 	s.calculateBlock = (<-chan time.Time)(e)
@@ -104,7 +112,7 @@ func TestRemoteUpdates(t *testing.T) {
 	<-c
 
 	s2 := NewServer(nil)
-	s2.event = make(chan bool)
+	s2.event = make(chan string)
 
 	p2 := NewNetworkPort(s2)
 	pc := make(chan *NetworkConnection)

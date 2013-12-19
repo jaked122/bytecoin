@@ -2,6 +2,7 @@ package libytcd
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"libGFC"
 	"libytc"
 	"net"
@@ -15,7 +16,7 @@ type Server struct {
 	TransactionChannel chan TransactionError
 	BlockChannel       chan BlockError
 	KeyChannel         chan KeyError
-	event              chan bool
+	event              chan string
 	calculateBlock     <-chan time.Time
 	SeenTransactions   map[string]libytc.Update
 	Keys               map[string]*ecdsa.PrivateKey
@@ -52,34 +53,44 @@ func (s *Server) AddPort(port Port) {
 	s.ports = append(s.ports, port)
 	port.AddServer(s)
 	if s.event != nil {
-		s.event <- true
+		s.event <- "addPort"
 	}
 }
 
 func (s *Server) handleChannels() {
 	for {
+		op := "unknown"
 		select {
 		case c := <-s.TransactionChannel:
+			op = "transaction"
 			update := c.BlockMessage
 			_, found := s.SeenTransactions[update.String()]
 			if found {
+				op = "transactiondup"
 				c.error <- nil
-				continue
-			}
-			err := update.Verify(s.state[update.Chain()])
-			if err != nil {
-				c.error <- err
+				close(c.error)
 			} else {
-				s.SeenTransactions[update.String()] = update
-				c.error <- nil
-				for _, p := range s.ports {
-					if p != c.Source {
-						p.AddTransaction(update)
+				err := update.Verify(s.state[update.Chain()])
+				if err != nil {
+					c.error <- err
+					close(c.error)
+					op = "transactionerr\n"
+					op += err.Error()
+				} else {
+					s.SeenTransactions[update.String()] = update
+					op += fmt.Sprint(len(s.SeenTransactions))
+					c.error <- nil
+					close(c.error)
+					for _, p := range s.ports {
+						if p != c.Source {
+							p.AddTransaction(update)
+						}
 					}
 				}
 			}
 
 		case block := <-s.BlockChannel:
+			op = "block"
 			var err error = nil
 			chain := "GFC"
 			for _, v := range block.BlockMessage.Updates() {
@@ -91,6 +102,7 @@ func (s *Server) handleChannels() {
 			}
 
 			block.error <- err
+			close(block.error)
 
 			for _, p := range s.ports {
 				if p != block.Source {
@@ -102,10 +114,13 @@ func (s *Server) handleChannels() {
 			s.SeenTransactions = make(map[string]libytc.Update)
 
 		case key := <-s.KeyChannel:
+			op = "key"
 			s.Keys[key.Id] = key.Key
 			key.error <- nil
+			close(key.error)
 
 		case _ = <-s.calculateBlock:
+			op = "calculate"
 
 			if _, found := s.Keys[s.state["GFC"].NextHost().Id]; found {
 
@@ -120,7 +135,7 @@ func (s *Server) handleChannels() {
 		}
 
 		if s.event != nil {
-			s.event <- true
+			s.event <- op
 		}
 	}
 }

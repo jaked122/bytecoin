@@ -11,8 +11,7 @@ type TransferUpdate struct {
 	Source      string
 	Destination string
 	Amount      uint64
-	Signature   libytc.Signature
-	//Public Key? Check bitcoin
+	Signature   *libytc.SignatureMap
 }
 
 func (t *TransferUpdate) Verify(i interface{}) (err error) {
@@ -33,11 +32,11 @@ func (t *TransferUpdate) Verify(i interface{}) (err error) {
 		return errors.New("Not enough money in source account")
 	}
 
-	return libytc.Verify(t.String(), h.KeyList[0], t.Signature)
+	return h.Verify(t.String(), t.Signature)
 }
 
 func (t *TransferUpdate) Sign(key *ecdsa.PrivateKey) {
-	t.Signature = libytc.Sign(t.String(), key)
+	t.Signature = libytc.SignMap(nil, t.String(), key)
 	return
 }
 
@@ -75,7 +74,7 @@ func NewTransferUpdate(source string, destination string, amount uint64) (t *Tra
 type LocationUpdate struct {
 	Id        string
 	Location  []string
-	Signature libytc.Signature
+	Signature *libytc.SignatureMap
 }
 
 func NewLocationUpdate(Id string, Location []string) (l *LocationUpdate) {
@@ -93,7 +92,7 @@ func (l *LocationUpdate) Verify(i interface{}) (err error) {
 		return errors.New("Id does not exist")
 	}
 
-	return libytc.Verify(l.String(), h.KeyList[0], l.Signature)
+	return h.Verify(l.String(), l.Signature)
 }
 
 func (l *LocationUpdate) Apply(i interface{}) {
@@ -110,7 +109,7 @@ func (l *LocationUpdate) String() (s string) {
 }
 
 func (l *LocationUpdate) Sign(key *ecdsa.PrivateKey) {
-	l.Signature = libytc.Sign(l.String(), key)
+	l.Signature = libytc.SignMap(nil, l.String(), key)
 	return
 }
 
@@ -120,7 +119,7 @@ func (l *LocationUpdate) Chain() string {
 
 type HostUpdate struct {
 	Record    *FileChainRecord
-	Signature libytc.Signature
+	Signature *libytc.SignatureMap
 }
 
 func NewHostUpdate(f *FileChainRecord) (h *HostUpdate) {
@@ -130,7 +129,7 @@ func NewHostUpdate(f *FileChainRecord) (h *HostUpdate) {
 }
 
 func (t *HostUpdate) Sign(key *ecdsa.PrivateKey) {
-	t.Signature = libytc.Sign(t.String(), key)
+	t.Signature = libytc.SignMap(nil, t.String(), key)
 	return
 }
 
@@ -142,7 +141,7 @@ func (t *HostUpdate) Verify(i interface{}) (err error) {
 		return
 	}
 
-	return libytc.Verify(t.String(), h.KeyList[0], t.Signature)
+	return h.Verify(t.String(), t.Signature)
 }
 
 func (t *HostUpdate) Apply(i interface{}) {

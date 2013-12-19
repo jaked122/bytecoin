@@ -9,7 +9,7 @@ import (
 func TestBlockGeneration(t *testing.T) {
 	t.Log("Create server")
 	s := NewServer(nil)
-	s.event = make(chan bool)
+	s.event = make(chan string)
 
 	e := make(chan time.Time)
 	s.calculateBlock = (<-chan time.Time)(e)
