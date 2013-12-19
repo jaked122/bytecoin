@@ -23,6 +23,10 @@ func UpdateName(u libytc.Update) (out string) {
 		out = "TransferUpdate"
 	case *HostUpdate:
 		out = "HostUpdate"
+	case *LocationUpdate:
+		out = "LocationUpdate"
+	case *KeyUpdate:
+		out = "KeyUpdate"
 	default:
 		log.Print(u)
 		log.Fatal("Unknown Update Type")
@@ -39,6 +43,10 @@ func MakeType(Type string, Chain string) (u libytc.Update) {
 		u = new(TransferUpdate)
 	case "HostUpdate":
 		u = new(HostUpdate)
+	case "LocationUpdate":
+		u = new(LocationUpdate)
+	case "KeyUpdate":
+		u = new(KeyUpdate)
 	default:
 		log.Fatal("Incorrect output")
 	}

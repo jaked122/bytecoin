@@ -2,6 +2,7 @@ package libGFC
 
 import (
 	"crypto/ecdsa"
+	"libytc"
 	"testing"
 )
 
@@ -83,5 +84,37 @@ func TestTranferEncoding(t *testing.T) {
 
 	if j.Verify(s) != nil {
 		t.Fatal(j.Verify(s))
+	}
+}
+
+func TestKeyUpdate(t *testing.T) {
+
+	priv, record, s := barChain()
+
+	_, npub := libytc.DeterministicKey(2)
+
+	NewKeyList := make(map[string]float64)
+	NewKeyList[npub.Hash()] = 1.0
+
+	k := NewKeyUpdate(record.Id, NewKeyList)
+	k.Sign(priv)
+
+	b := GFCEncoder{}.EncodeUpdate(k)
+	j := GFCEncoder{}.DecodeUpdate(b)
+
+	err := k.Verify(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = j.Verify(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	j.Apply(s)
+
+	if s.State[record.Id].KeyList[npub.Hash()] != 1.0 {
+		t.Fatal(s.State[record.Id])
 	}
 }

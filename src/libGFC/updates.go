@@ -159,3 +159,49 @@ func (t *HostUpdate) String() (str string) {
 	str += "Record:" + fmt.Sprint(t.Record) + "\n"
 	return
 }
+
+type KeyUpdate struct {
+	Id        string
+	KeyList   map[string]float64
+	Signature *libytc.SignatureMap
+}
+
+func NewKeyUpdate(Id string, KeyList map[string]float64) (k *KeyUpdate) {
+	k = new(KeyUpdate)
+	k.Id = Id
+	k.KeyList = KeyList
+	return
+}
+
+func (k *KeyUpdate) Verify(i interface{}) (err error) {
+	s := i.(*GFCChain)
+
+	h, found := s.State[k.Id]
+	if !found {
+		return errors.New("Id does not exist")
+	}
+
+	return h.Verify(k.String(), k.Signature)
+}
+
+func (k *KeyUpdate) Apply(i interface{}) {
+	s := i.(*GFCChain)
+	s.State[k.Id].KeyList = k.KeyList
+	return
+}
+
+func (k *KeyUpdate) String() (s string) {
+	s = "KeyUpdate\n"
+	s += fmt.Sprint("Id: %s\n", k.Id)
+	s += fmt.Sprint("KeyList: %s\n", fmt.Sprint(k.KeyList))
+	return
+}
+
+func (k *KeyUpdate) Sign(key *ecdsa.PrivateKey) {
+	k.Signature = libytc.SignMap(k.Signature, k.String(), key)
+	return
+}
+
+func (k *KeyUpdate) Chain() string {
+	return "GFC"
+}
