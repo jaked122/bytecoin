@@ -118,3 +118,30 @@ func TestKeyUpdate(t *testing.T) {
 		t.Fatal(s.State[record.Id])
 	}
 }
+
+func TestSpaceUpdate(t *testing.T) {
+
+	priv, record, s := barChain()
+
+	k := NewSpaceUpdate(record.Id, 1338)
+	k.Sign(priv)
+
+	b := GFCEncoder{}.EncodeUpdate(k)
+	j := GFCEncoder{}.DecodeUpdate(b)
+
+	err := k.Verify(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = j.Verify(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	j.Apply(s)
+
+	if s.State[record.Id].AvailableSpace != 1338 {
+		t.Fatal(s.State[record.Id])
+	}
+}

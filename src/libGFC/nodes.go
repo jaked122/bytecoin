@@ -8,13 +8,13 @@ import (
 )
 
 type FileChainRecord struct {
-	Id          string
-	Balance     uint64
-	Location    []string
-	FreeSpace   uint64 ///bytes
-	TakenSpace  uint64
-	RentedSpace uint64
-	KeyList     map[string]float64
+	Id             string
+	Balance        uint64
+	Location       []string
+	AvailableSpace uint64 ///bytes
+	TakenSpace     uint64
+	RentedSpace    uint64
+	KeyList        map[string]float64
 }
 
 func NewHost(location string) (private *ecdsa.PrivateKey, host *FileChainRecord) {

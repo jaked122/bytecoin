@@ -27,6 +27,8 @@ func UpdateName(u libytc.Update) (out string) {
 		out = "LocationUpdate"
 	case *KeyUpdate:
 		out = "KeyUpdate"
+	case *SpaceUpdate:
+		out = "SpaceUpdate"
 	default:
 		log.Print(u)
 		log.Fatal("Unknown Update Type")
@@ -47,6 +49,8 @@ func MakeType(Type string, Chain string) (u libytc.Update) {
 		u = new(LocationUpdate)
 	case "KeyUpdate":
 		u = new(KeyUpdate)
+	case "SpaceUpdate":
+		u = new(SpaceUpdate)
 	default:
 		log.Fatal("Incorrect output")
 	}

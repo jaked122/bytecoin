@@ -205,3 +205,49 @@ func (k *KeyUpdate) Sign(key *ecdsa.PrivateKey) {
 func (k *KeyUpdate) Chain() string {
 	return "GFC"
 }
+
+type SpaceUpdate struct {
+	Id             string
+	AvailableSpace uint64
+	Signature      *libytc.SignatureMap
+}
+
+func NewSpaceUpdate(Id string, AvailableSpace uint64) (k *SpaceUpdate) {
+	k = new(SpaceUpdate)
+	k.Id = Id
+	k.AvailableSpace = AvailableSpace
+	return
+}
+
+func (k *SpaceUpdate) Verify(i interface{}) (err error) {
+	s := i.(*GFCChain)
+
+	h, found := s.State[k.Id]
+	if !found {
+		return errors.New("Id does not exist")
+	}
+
+	return h.Verify(k.String(), k.Signature)
+}
+
+func (k *SpaceUpdate) Apply(i interface{}) {
+	s := i.(*GFCChain)
+	s.State[k.Id].AvailableSpace = k.AvailableSpace
+	return
+}
+
+func (k *SpaceUpdate) String() (s string) {
+	s = "SpaceUpdate\n"
+	s += fmt.Sprint("Id: %s\n", k.Id)
+	s += fmt.Sprint("AvailableSpace: %s\n", fmt.Sprint(k.AvailableSpace))
+	return
+}
+
+func (k *SpaceUpdate) Sign(key *ecdsa.PrivateKey) {
+	k.Signature = libytc.SignMap(k.Signature, k.String(), key)
+	return
+}
+
+func (k *SpaceUpdate) Chain() string {
+	return "GFC"
+}
