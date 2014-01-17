@@ -55,6 +55,10 @@ func (t *TransferUpdate) Chain() string {
 	return "GFC"
 }
 
+func (t *TransferUpdate) ChainID() string {
+	return "GFC"
+}
+
 func (t *TransferUpdate) String() (str string) {
 	str = "TransferUpdate\n"
 	str += "Source:" + string(t.Source) + "\n"
@@ -117,6 +121,10 @@ func (l *LocationUpdate) Chain() string {
 	return "GFC"
 }
 
+func (l *LocationUpdate) ChainID() string {
+	return "GFC"
+}
+
 type HostUpdate struct {
 	Record    *FileChainRecord
 	Signature *libytc.SignatureMap
@@ -151,6 +159,10 @@ func (t *HostUpdate) Apply(i interface{}) {
 }
 
 func (t *HostUpdate) Chain() string {
+	return "GFC"
+}
+
+func (t *HostUpdate) ChainID() string {
 	return "GFC"
 }
 
@@ -206,6 +218,10 @@ func (k *KeyUpdate) Chain() string {
 	return "GFC"
 }
 
+func (k *KeyUpdate) ChainID() string {
+	return "GFC"
+}
+
 type SpaceUpdate struct {
 	Id             string
 	AvailableSpace uint64
@@ -249,5 +265,9 @@ func (k *SpaceUpdate) Sign(key *ecdsa.PrivateKey) {
 }
 
 func (k *SpaceUpdate) Chain() string {
+	return "GFC"
+}
+
+func (k *SpaceUpdate) ChainID() string {
 	return "GFC"
 }

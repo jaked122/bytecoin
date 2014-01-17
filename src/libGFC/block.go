@@ -24,3 +24,7 @@ func (g *GFCBlock) Revision() uint64 {
 func (g *GFCBlock) Chain() string {
 	return "GFC"
 }
+
+func (g *GFCBlock) ChainID() string {
+	return "GFC"
+}
