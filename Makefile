@@ -8,11 +8,11 @@ bin/ytcClient: libraries
 	rm -f bin/ytcClient
 	GOPATH=$(CURDIR) go install ytcClient
 
-libraries: src/libGFC/*.go src/libytcd/*.go src/libytcd/*.go
-	GOPATH=$(CURDIR) go install libGFC libytc libytcd
+libraries: src/libGFC/*.go src/libytcd/*.go src/libytcd/*.go src/libFileSwarm
+	GOPATH=$(CURDIR) go install libGFC libytc libytcd libFileSwarm
 
 test: libraries
-	GOPATH=$(CURDIR) go test libGFC libytc libytcd
+	GOPATH=$(CURDIR) go test libGFC libytc libytcd libFileSwarm
 
 fmt:
 	go fmt src/ytcd/*.go
@@ -20,6 +20,7 @@ fmt:
 	go fmt src/libytcd/*.go
 	go fmt src/libGFC/*.go
 	go fmt src/libytc/*.go
+	go fmt src/libFileSwarm/*.go
 
 clean:
 	rm -f bin/ytcd
