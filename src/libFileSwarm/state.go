@@ -12,18 +12,23 @@ type State struct {
 
 	previousblocks []*Block
 	currentblock   *Block
-
-	indictments []*Indictment
 }
 
 type Block struct {
-	blockNumber     uint64
-	blockHash       string
-	entropyhash     map[string]string
-	entropystring   map[string]string
+	blockNumber uint64
+	blockHash   string
+
+	entropyhash   map[string]string
+	entropystring map[string]string
+
+	storagehash   map[string]string
+	storagestring map[string]string
+
 	incomingsignals []*Signal
 	outgoinsignals  []*Signal
-	hosthash        map[string]string
+
+	hostsignatures map[string]string
+	indictments    []*Indictment
 }
 
 type Signal struct {
