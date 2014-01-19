@@ -10,7 +10,7 @@ type Update interface {
 
 type Block interface {
 	Revision() uint64
-	Updates() []Update
+	Apply(interface{}) error
 	Chain() string
 	ChainID() string
 }

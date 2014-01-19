@@ -92,7 +92,7 @@ func (g GFCEncoder) DecodeUpdate(in []byte) (up libytc.Update) {
 func (g GFCEncoder) EncodeBlock(block libytc.Block) (out []byte) {
 	b := new(EncodedGFCBlock)
 	b.Revision = block.Revision()
-	for _, v := range block.Updates() {
+	for _, v := range block.(*GFCBlock).updates {
 		b.Blocks = append(b.Blocks, g.EncodeUpdate(v))
 	}
 

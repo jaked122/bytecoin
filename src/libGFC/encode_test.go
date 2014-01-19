@@ -15,7 +15,7 @@ func TestEncoding(t *testing.T) {
 	v = append(v, update)
 
 	arr := g.EncodeBlock(NewGFCBlock(0, v))
-	v = g.DecodeBlock(arr).Updates()
+	v = g.DecodeBlock(arr).(*GFCBlock).updates
 	if v[0].(*HostUpdate).Record.Location[0] != "foo" {
 		t.Fatal("Location is not foo")
 	}

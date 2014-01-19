@@ -91,15 +91,8 @@ func (s *Server) handleChannels() {
 
 		case block := <-s.BlockChannel:
 			op = "block"
-			var err error = nil
-			chain := "GFC"
-			for _, v := range block.BlockMessage.Updates() {
-				err = v.Verify(s.state[v.Chain()])
-				if err != nil {
-					break
-				}
-				v.Apply(s.state[v.Chain()])
-			}
+			chain := block.BlockMessage.Chain()
+			err := block.BlockMessage.Apply(s.state[chain])
 
 			block.error <- err
 			close(block.error)
