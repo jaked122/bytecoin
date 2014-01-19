@@ -20,8 +20,8 @@ type State struct {
 }
 
 type Block struct {
-	blockNumber uint64
-	blockHash   string
+	BlockNumber uint64
+	BlockHash   string
 
 	entropyhash   map[string]string
 	entropystring map[string]string
@@ -34,6 +34,8 @@ type Block struct {
 
 	hostsignatures map[string]*libytc.SignatureMap
 	indictments    []*Indictment
+
+	Transactionproofs []libytc.Updates
 }
 
 type Signal struct {
