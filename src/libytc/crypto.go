@@ -57,10 +57,8 @@ func (h *HostKey) String() (str string) {
 	return
 }
 
-func (h *HostKey) Hash() (str string) {
-	hash := sha512.New()
-	str = hex.EncodeToString(hash.Sum([]byte(h.String())))
-	return
+func (h *HostKey) Hash() string {
+	return StringHash(h.String())
 }
 
 func (h *HostKey) MarshalJSON() (text []byte, err error) {
@@ -108,5 +106,11 @@ func NewKey(source io.Reader) (priv *ecdsa.PrivateKey, host *HostKey) {
 func RandomKey() (priv *ecdsa.PrivateKey, host *HostKey) {
 	source := cryptorand.Reader
 	priv, host = NewKey(source)
+	return
+}
+
+func StringHash(input string) (str string) {
+	hash := sha512.New()
+	str = hex.EncodeToString(hash.Sum([]byte(input)))
 	return
 }

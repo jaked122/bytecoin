@@ -28,6 +28,11 @@ func (h *HeartbeatUpdate) Verify(i interface{}) (err error) {
 		return errors.New("Host missing from swarmtracker")
 	}
 
+	hash := s.currentblock.entropyhash[h.HostId]
+	if libytc.StringHash(h.EntropyString) != hash {
+		return errors.New("Host entropy string does not match hash")
+	}
+
 	return host.Verify(h.String(), h.Signature)
 }
 
