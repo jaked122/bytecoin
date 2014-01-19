@@ -24,6 +24,10 @@ type Signature struct {
 	S *big.Int
 }
 
+func (s Signature) String() string {
+	return s.R.String() + s.S.String()
+}
+
 func Sign(str string, priv *ecdsa.PrivateKey) Signature {
 	r, s, err := ecdsa.Sign(cryptorand.Reader, priv, []byte(str))
 	if err != nil {

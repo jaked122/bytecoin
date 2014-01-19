@@ -1,14 +1,18 @@
 package libFileSwarm
 
-type State struct {
-	swarmid            string
-	corehostcount      uint64
-	corehostredundancy uint64
-	growthhostcount    uint64
-	totalspace         uint64
+import (
+	"libGFC"
+)
 
-	corehosthashes   map[string][]string
-	growthhosthashes map[string][]string
+type State struct {
+	swarmtracker libGFC.GFCChain
+
+	swarmid        string
+	hostcount      uint64
+	hostredundancy uint64
+	totalspace     uint64
+
+	piecemapping map[string][]string
 
 	previousblocks []*Block
 	currentblock   *Block
