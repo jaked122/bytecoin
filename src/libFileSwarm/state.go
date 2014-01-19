@@ -35,7 +35,7 @@ type Block struct {
 	hostsignatures map[string]*libytc.SignatureMap
 	indictments    []*Indictment
 
-	Transactionproofs []libytc.Updates
+	Transactionproofs []libytc.Update
 }
 
 type Signal struct {

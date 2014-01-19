@@ -41,8 +41,10 @@ func (h *HeartbeatUpdate) Sign(key *ecdsa.PrivateKey) {
 }
 
 func (h *HeartbeatUpdate) Apply(i interface{}) {
-	s := i.(*State)
-	s = s
+	b := i.(*Block)
+	b.entropyhash[h.HostId] = h.EntropyHash
+	b.entropystring[h.HostId] = h.EntropyString
+	b.hostsignatures[h.HostId] = h.BlockSignature
 
 }
 
