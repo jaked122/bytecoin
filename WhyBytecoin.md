@@ -1,3 +1,5 @@
+FILE IS OUT OF DATE!
+
 Why Bytecoin is Better than the Alternatives
 ============================================
 
