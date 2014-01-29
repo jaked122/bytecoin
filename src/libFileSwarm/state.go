@@ -2,7 +2,6 @@ package libFileSwarm
 
 import (
 	"libGFC"
-	"libytc"
 )
 
 type State struct {
@@ -17,25 +16,6 @@ type State struct {
 
 	previousblocks []*Block
 	currentblock   *Block
-}
-
-type Block struct {
-	BlockNumber uint64
-	BlockHash   string
-
-	entropyhash   map[string]string
-	entropystring map[string]string
-
-	storagehash   map[string]string
-	storagestring map[string]string
-
-	incomingsignals []*Signal
-	outgoinsignals  []*Signal
-
-	hostsignatures map[string]*libytc.SignatureMap
-	indictments    []*Indictment
-
-	Transactionproofs []libytc.Update
 }
 
 type Signal struct {
