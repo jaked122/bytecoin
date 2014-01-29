@@ -3,8 +3,9 @@ package libytc
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	cryptorand "crypto/rand"
+	"crypto/rand"
 	"crypto/sha512"
+	"cryptorand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
